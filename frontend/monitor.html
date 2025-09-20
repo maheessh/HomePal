@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aegis AI - Monitor Me</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #0d0d0d;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 400px;
+        background: radial-gradient(
+          circle at top,
+          rgba(76, 59, 171, 0.1),
+          transparent 70%
+        );
+        z-index: 0;
+        pointer-events: none;
+      }
+      .main-content {
+        position: relative;
+        z-index: 1;
+      }
+      .toggle-checkbox:checked {
+        right: 0;
+        border-color: #4a5568;
+      }
+      .toggle-checkbox:checked + .toggle-label {
+        background-color: #5a67d8;
+      }
+      .card {
+        background-color: rgba(23, 23, 23, 0.5);
+        border: 1px solid #2d2d2d;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease-in-out;
+      }
+      .nav-link {
+        transition: all 0.2s ease-in-out;
+        border-bottom: 2px solid transparent;
+      }
+      .nav-link.active {
+        color: #fff;
+        border-bottom-color: #5a67d8;
+      }
+      .activity-log,
+      .video-container {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.7s ease-in-out, opacity 0.5s ease-in-out,
+          margin-top 0.5s ease-in-out;
+        opacity: 0;
+        margin-top: 0;
+      }
+      .activity-log.active,
+      .video-container.active {
+        max-height: 1000px;
+        opacity: 1;
+        margin-top: 1.5rem;
+      }
+    </style>
+  </head>
+  <body class="text-gray-300">
+    <div class="main-content flex flex-col min-h-screen">
+      <!-- Header -->
+      <header
+        class="border-b border-gray-800/50 sticky top-0 z-50 backdrop-blur-md"
+      >
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex items-center justify-between h-16">
+            <div class="flex items-center space-x-3">
+              <svg
+                class="h-8 w-8 text-indigo-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+              <h1 class="text-2xl font-bold text-white">Aegis AI</h1>
+            </div>
+            <nav class="hidden md:flex items-center space-x-8">
+              <a href="/" class="nav-link">Dashboard</a>
+              <a href="/surveillance" class="nav-link">Home Surveillance</a>
+              <a href="/monitor" class="nav-link active">Monitor Me</a>
+            </nav>
+            <div class="md:hidden">
+              <button
+                id="mobile-menu-button"
+                class="text-gray-300 hover:text-white focus:outline-none"
+              >
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 6h16M4 12h16m-7 6h7"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden">
+          <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <a href="/" class="nav-link-mobile">Dashboard</a>
+            <a href="/surveillance" class="nav-link-mobile"
+              >Home Surveillance</a
+            >
+            <a href="/monitor" class="nav-link-mobile active">Monitor Me</a>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="card p-6 max-w-2xl mx-auto">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="text-xl font-semibold text-white">Monitor Me</h3>
+              <p class="text-gray-400 mt-2 text-sm">
+                Personal wellness tracking and automated alerts.
+              </p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-sm font-medium text-gray-400 status-text"
+                >Off</span
+              >
+              <div class="relative inline-block w-10 align-middle select-none">
+                <input
+                  type="checkbox"
+                  name="toggle"
+                  id="monitor-toggle"
+                  class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+                  data-system="monitor"
+                />
+                <label
+                  for="monitor-toggle"
+                  class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer"
+                ></label>
+              </div>
+            </div>
+          </div>
+          <div id="video-container" class="video-container">
+            <div class="relative bg-black rounded-lg overflow-hidden">
+              <img
+                id="cameraStream"
+                src=""
+                alt="Monitor Camera Stream"
+                class="w-full h-auto"
+              />
+            </div>
+          </div>
+          
+          <!-- Activity Analysis Section -->
+          <div id="monitor-analysis" class="activity-log bg-black/20 p-6 mt-6 rounded-md">
+            <div class="flex items-center justify-between mb-6">
+              <h4 class="font-semibold text-xl text-white">
+                Last 24 Hours - Personal Activity Analysis
+              </h4>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                <p id="summary-time-present" class="text-2xl font-bold text-white">--</p>
+                <p class="text-sm text-gray-400">Time Present</p>
+              </div>
+              <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                <p id="summary-activity-episodes" class="text-2xl font-bold text-white">--</p>
+                <p class="text-sm text-gray-400">Activity Episodes</p>
+              </div>
+              <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                <p id="summary-rest-time" class="text-2xl font-bold text-white">--</p>
+                <p class="text-sm text-gray-400">Rest Time</p>
+              </div>
+            </div>
+
+            <!-- Timeline -->
+            <div>
+              <h5 class="font-medium text-lg text-white mb-3">
+                Recent Activity
+              </h5>
+              <div id="monitor-timeline" class="space-y-3 h-96 overflow-y-auto">
+                <!-- Log entries will be injected here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="border-t border-gray-800/50 mt-12">
+        <div
+          class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm"
+        >
+          &copy; 2025 Aegis AI. All Rights Reserved.
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const MODULE_NAME = "monitor";
+        const toggle = document.getElementById("monitor-toggle");
+        const mobileMenuButton = document.getElementById("mobile-menu-button");
+        const mobileMenu = document.getElementById("mobile-menu");
+        const cameraStream = document.getElementById("cameraStream");
+        const videoContainer = document.getElementById("video-container");
+        const logContainer = document.getElementById("monitor-analysis");
+        const statusText = document.querySelector(".status-text");
+        const timelineContainer = document.getElementById("monitor-timeline");
+        
+        // Summary card elements
+        const timePresentEl = document.getElementById("summary-time-present");
+        const activityEpisodesEl = document.getElementById("summary-activity-episodes");
+        const restTimeEl = document.getElementById("summary-rest-time");
+
+        let eventPollingInterval = null;
+
+        const setModuleState = async (active) => {
+          try {
+            await fetch("/api/module/state", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ module: MODULE_NAME, active }),
+            });
+          } catch (error) {
+            console.error(`Error setting state for ${MODULE_NAME}:`, error);
+          }
+        };
+
+        const fetchSystemState = async () => {
+          try {
+            const response = await fetch("/api/system/state");
+            const data = await response.json();
+            if (data.success) {
+              const isActive = data.state[MODULE_NAME];
+              toggle.checked = isActive;
+              updateUI(isActive);
+            }
+          } catch (error) {
+            console.error("Error fetching system state:", error);
+          }
+        };
+
+        const updateUI = (isActive) => {
+          if (isActive) {
+            statusText.textContent = "On";
+            statusText.classList.add("text-green-400");
+            statusText.classList.remove("text-gray-400");
+            videoContainer.classList.add("active");
+            cameraStream.src = `/stream?t=${new Date().getTime()}`;
+            logContainer.classList.add("active");
+            startEventPolling();
+          } else {
+            statusText.textContent = "Off";
+            statusText.classList.remove("text-green-400");
+            statusText.classList.add("text-gray-400");
+            cameraStream.src = "";
+            videoContainer.classList.remove("active");
+            logContainer.classList.remove("active");
+            stopEventPolling();
+          }
+        };
+        
+        const fetchEvents = async () => {
+            try {
+                const response = await fetch(`/api/events/all?module=${MODULE_NAME}`);
+                const data = await response.json();
+                if (data.success) {
+                    updateActivityTimeline(data.events);
+                    // NOTE: The summary data is currently hardcoded as the backend
+                    // does not provide a summary endpoint for this module yet.
+                    updateSummaryCards(data.events);
+                }
+            } catch (error) {
+                console.error("Error fetching events:", error);
+            }
+        };
+        
+        // --- UI Update Functions for New Components ---
+        const updateSummaryCards = (events) => {
+            // Placeholder logic until backend provides this
+            timePresentEl.textContent = "89%"; 
+            activityEpisodesEl.textContent = events.length;
+            restTimeEl.textContent = "7.2h";
+        };
+        
+        const updateActivityTimeline = (events) => {
+            if (events.length === 0) {
+                timelineContainer.innerHTML = `<p class="text-gray-500">No recent activity detected.</p>`;
+                return;
+            }
+            timelineContainer.innerHTML = events.map((event) => {
+                const time = new Date(event.timestamp * 1000).toLocaleTimeString();
+                const isAlert = ["fall", "immobile", "distress"].includes(event.class_name.toLowerCase());
+                const borderColor = isAlert ? 'border-red-400' : 'border-blue-400';
+                
+                return `
+                    <div class="flex items-center space-x-4 p-3 bg-gray-800/30 rounded-lg border-l-4 ${borderColor}">
+                        <div class="flex-grow">
+                            <div class="flex items-center justify-between">
+                                <p class="text-white font-medium">Status: <strong>${event.class_name}</strong></p>
+                                <span class="text-xs text-gray-400">${time}</span>
+                            </div>
+                            <p class="text-sm text-gray-400">
+                                Confidence: ${Math.round(event.confidence * 100)}%
+                            </p>
+                        </div>
+                    </div>`;
+            }).join("");
+        };
+
+        const startEventPolling = () => {
+            if (eventPollingInterval) return;
+            fetchEvents();
+            eventPollingInterval = setInterval(fetchEvents, 3000);
+        };
+
+        const stopEventPolling = () => {
+            clearInterval(eventPollingInterval);
+            eventPollingInterval = null;
+        };
+        
+        mobileMenuButton.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
+
+        toggle.addEventListener("change", (e) => {
+            const isChecked = e.target.checked;
+            setModuleState(isChecked);
+            updateUI(isChecked);
+        });
+
+        fetchSystemState();
+      });
+    </script>
+  </body>
+</html>
+

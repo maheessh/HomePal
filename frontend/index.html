@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aegis AI - Security Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #0d0d0d;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 400px;
+        background: radial-gradient(
+          circle at top,
+          rgba(76, 59, 171, 0.1),
+          transparent 70%
+        );
+        z-index: 0;
+        pointer-events: none;
+      }
+      .main-content {
+        position: relative;
+        z-index: 1;
+      }
+      .card {
+        background-color: rgba(23, 23, 23, 0.5);
+        border: 1px solid #2d2d2d;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease-in-out;
+      }
+      .nav-link {
+        transition: all 0.2s ease-in-out;
+        border-bottom: 2px solid transparent;
+      }
+      .nav-link.active {
+        color: #fff;
+        border-bottom-color: #5a67d8;
+      }
+      .toggle-checkbox:checked {
+        right: 0;
+        border-color: #4a5568;
+      }
+      .toggle-checkbox:checked + .toggle-label {
+        background-color: #5a67d8;
+      }
+    </style>
+  </head>
+  <body class="text-gray-300">
+    <div class="main-content flex flex-col min-h-screen">
+      <!-- Header -->
+      <header
+        class="border-b border-gray-800/50 sticky top-0 z-50 backdrop-blur-md"
+      >
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex items-center justify-between h-16">
+            <div class="flex items-center space-x-3">
+              <svg
+                class="h-8 w-8 text-indigo-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+              <h1 class="text-2xl font-bold text-white">Aegis AI</h1>
+            </div>
+            <nav class="hidden md:flex items-center space-x-8">
+              <a href="/" class="nav-link active">Dashboard</a>
+              <a href="/surveillance" class="nav-link">Home Surveillance</a>
+              <a href="/monitor" class="nav-link">Monitor Me</a>
+            </nav>
+            <div class="md:hidden">
+              <button
+                id="mobile-menu-button"
+                class="text-gray-300 hover:text-white focus:outline-none"
+              >
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 6h16M4 12h16m-7 6h7"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden">
+          <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <a href="/" class="nav-link-mobile active">Dashboard</a>
+            <a href="/surveillance" class="nav-link-mobile"
+              >Home Surveillance</a
+            >
+            <a href="/monitor" class="nav-link-mobile">Monitor Me</a>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="mb-10 text-center">
+          <h2 class="text-4xl font-bold text-white">System Dashboard</h2>
+          <p class="text-gray-400 mt-2">
+            Live system status and global event feed.
+          </p>
+        </div>
+
+        <!-- Event Summary -->
+        <div class="card p-6 max-w-4xl mx-auto mb-8">
+            <h3 class="text-xl font-semibold text-white mb-4">Event Summary</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                <div>
+                    <p class="text-3xl font-bold text-indigo-400" id="summary-total-events">--</p>
+                    <p class="text-sm text-gray-400">Total Events Logged</p>
+                </div>
+                <div>
+                    <p class="text-3xl font-bold text-indigo-400" id="summary-events-today">--</p>
+                    <p class="text-sm text-gray-400">Events Today</p>
+                </div>
+                <div>
+                    <p class="text-lg font-semibold text-indigo-400" id="summary-last-event">--</p>
+                    <p class="text-sm text-gray-400">Last Event Time</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive System Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
+          <!-- Home Surveillance Card -->
+          <div class="card p-6">
+            <div class="flex justify-between items-center mb-4">
+              <a href="/surveillance" class="text-xl font-semibold text-white hover:text-indigo-400 transition-colors">Home Surveillance</a>
+              <div class="flex items-center space-x-2">
+                <span class="text-sm font-medium text-gray-400 status-text" data-system="surveillance">Off</span>
+                <div class="relative inline-block w-10 align-middle select-none">
+                  <input type="checkbox" name="toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" data-system="surveillance"/>
+                  <label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer"></label>
+                </div>
+              </div>
+            </div>
+            <p class="text-sm text-gray-400">Monitors for motion, people, and other environmental events.</p>
+          </div>
+          <!-- Monitor Me Card -->
+          <div class="card p-6">
+            <div class="flex justify-between items-center mb-4">
+              <a href="/monitor" class="text-xl font-semibold text-white hover:text-indigo-400 transition-colors">Monitor Me</a>
+              <div class="flex items-center space-x-2">
+                <span class="text-sm font-medium text-gray-400 status-text" data-system="monitor">Off</span>
+                <div class="relative inline-block w-10 align-middle select-none">
+                  <input type="checkbox" name="toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" data-system="monitor"/>
+                  <label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer"></label>
+                </div>
+              </div>
+            </div>
+            <p class="text-sm text-gray-400">Personal wellness tracking and automated alerts.</p>
+          </div>
+        </div>
+
+        <!-- Live Global Event Feed -->
+        <div class="card p-6 max-w-4xl mx-auto">
+            <h3 class="text-xl font-semibold text-white mb-4">Live Global Event Feed</h3>
+            <div id="global-event-feed" class="space-y-3 h-96 overflow-y-auto">
+                <!-- Live events will be injected here by JavaScript -->
+            </div>
+        </div>
+      </main>
+
+      <footer class="border-t border-gray-800/50 mt-12">
+        <div
+          class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm"
+        >
+          &copy; 2025 Aegis AI. All Rights Reserved.
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const mobileMenuButton = document.getElementById("mobile-menu-button");
+        const mobileMenu = document.getElementById("mobile-menu");
+        const toggles = document.querySelectorAll(".toggle-checkbox");
+        
+        // Summary elements
+        const totalEventsEl = document.getElementById("summary-total-events");
+        const eventsTodayEl = document.getElementById("summary-events-today");
+        const lastEventEl = document.getElementById("summary-last-event");
+        const eventFeedContainer = document.getElementById("global-event-feed");
+
+        let systemState = { surveillance: false, monitor: false };
+        let summaryPoll, eventsPoll;
+
+        const fetchSystemState = async () => {
+          try {
+            const response = await fetch("/api/system/state");
+            const data = await response.json();
+            if (data.success) {
+              systemState = data.state;
+              updateDashboardUI();
+            }
+          } catch (error) {
+            console.error("Error fetching system state:", error);
+          }
+        };
+
+        const setModuleState = async (module, active) => {
+          try {
+            await fetch("/api/module/state", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ module, active }),
+            });
+          } catch (error) {
+            console.error(`Error setting state for ${module}:`, error);
+          }
+        };
+        
+        const fetchSummary = async () => {
+            try {
+                const response = await fetch("/api/events/summary");
+                const data = await response.json();
+                if(data.success) {
+                    totalEventsEl.textContent = data.summary.total_events;
+                    eventsTodayEl.textContent = data.summary.events_today;
+                    lastEventEl.textContent = data.summary.last_event_time;
+                }
+            } catch(error) {
+                console.error("Error fetching summary:", error);
+            }
+        };
+        
+        const fetchAllEvents = async () => {
+            try {
+                const response = await fetch("/api/events/all");
+                const data = await response.json();
+                if(data.success) {
+                    updateEventFeed(data.events);
+                }
+            } catch (error) {
+                console.error("Error fetching all events:", error);
+            }
+        };
+
+        const updateDashboardUI = () => {
+          toggles.forEach(toggle => {
+            const system = toggle.dataset.system;
+            const card = toggle.closest('.card');
+            const statusText = card.querySelector('.status-text');
+            
+            toggle.checked = systemState[system];
+
+            if (systemState[system]) {
+              statusText.textContent = "On";
+              statusText.classList.add("text-green-400");
+              statusText.classList.remove("text-gray-400");
+            } else {
+              statusText.textContent = "Off";
+              statusText.classList.remove("text-green-400");
+              statusText.classList.add("text-gray-400");
+            }
+          });
+        };
+
+        const updateEventFeed = (events) => {
+            if (events.length === 0) {
+                eventFeedContainer.innerHTML = `<p class="text-gray-500 text-center">No events recorded yet.</p>`;
+                return;
+            }
+            // Display latest events first
+            eventFeedContainer.innerHTML = events.slice().reverse().map(event => {
+                const time = new Date(event.timestamp * 1000).toLocaleString();
+                const moduleName = event.module.charAt(0).toUpperCase() + event.module.slice(1);
+                
+                return `
+                    <div class="flex items-center space-x-4 p-2 bg-gray-800/30 rounded-lg">
+                        <div class="flex-grow">
+                            <div class="flex items-center justify-between">
+                                <p class="text-white font-medium">${moduleName}: <strong>${event.class_name}</strong> detected</p>
+                                <span class="text-xs text-gray-400">${time}</span>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join("");
+        };
+        
+        // Event Listeners
+        mobileMenuButton.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
+
+        toggles.forEach(toggle => {
+            // Assign unique IDs to labels to make them clickable
+            const system = toggle.dataset.system;
+            toggle.id = `toggle-${system}`;
+            toggle.nextElementSibling.setAttribute('for', `toggle-${system}`);
+
+            toggle.addEventListener("change", async (e) => {
+                const isActive = e.target.checked;
+                systemState[system] = isActive;
+                await setModuleState(system, isActive);
+                updateDashboardUI();
+            });
+        });
+
+        // Initial Load and Polling
+        const startPolling = () => {
+            fetchSystemState();
+            fetchSummary();
+            fetchAllEvents();
+            summaryPoll = setInterval(fetchSummary, 5000); // every 5 seconds
+            eventsPoll = setInterval(fetchAllEvents, 3000); // every 3 seconds
+        };
+
+        startPolling();
+      });
+    </script>
+  </body>
+</html>
+
