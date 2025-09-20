@@ -54,7 +54,7 @@ def start_camera_server():
         )
 
         # Wait briefly for it to spin up
-        time.sleep(3)
+        time.sleep(10)
 
         # Ping the /api/status endpoint to confirm it’s alive
         requests.get(f"{CAMERA_SERVER_URL}/api/status", timeout=5).raise_for_status()
