@@ -1,26 +1,16 @@
 [
     {
-        "timestamp": 1758378917,
+        "timestamp": 1758387466,
         "module": "monitor",
         "class_name": "Person"
     },
     {
-        "timestamp": 1758378912,
-        "module": "monitor",
-        "class_name": "Person"
-    },
-    {
-        "timestamp": 1758378903,
+        "timestamp": 1758387451,
         "module": "surveillance",
         "class_name": "Motion"
     },
     {
-        "timestamp": 1758378898,
-        "module": "surveillance",
-        "class_name": "Motion"
-    },
-    {
-        "timestamp": 1758378893,
+        "timestamp": 1758387444,
         "module": "surveillance",
         "class_name": "Motion"
     }
