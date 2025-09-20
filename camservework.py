@@ -2,6 +2,7 @@
 """
 Camera Server that detects motion (Surveillance) and human presence (Monitor Me),
 saving events to a JSON file based on which modules are active.
+Now extended with YOLOv8 + DeepFace from person_monitor.py.
 """
 
 import cv2
@@ -10,10 +11,128 @@ import time
 from flask import Flask, Response, jsonify, request
 import json
 import os
+import numpy as np
+from ultralytics import YOLO
+from deepface import DeepFace
 
-# Define the path for our event log file, which app.py will also use
 EVENTS_FILE = 'events.json'
 
+# ------------------- Person Monitor Classes -------------------
+class ObjectDetector:
+    """YOLO person detector"""
+    def __init__(self, model_path='yolov8n.pt'):
+        self.model = YOLO(model_path)
+
+    def detect(self, frame, target_class='person'):
+        processed_frame = frame.copy()
+        detected_boxes = []
+        results = self.model(processed_frame, verbose=False)
+        for result in results:
+            boxes = result.boxes.cpu().numpy()
+            for box in boxes:
+                class_id = int(box.cls[0])
+                class_name = self.model.names[class_id]
+                if class_name == target_class:
+                    x1, y1, x2, y2 = box.xyxy[0].astype(int)
+                    detected_boxes.append([x1, y1, x2, y2])
+                    conf = box.conf[0]
+                    label = f'{class_name} {conf:.2f}'
+                    cv2.rectangle(processed_frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                    cv2.putText(processed_frame, label, (x1, y1 - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+        return processed_frame, detected_boxes
+
+class PersonRecognizer:
+    """DeepFace-based person recognition"""
+    def __init__(self, faces_dir="faces"):
+        self.faces_dir = faces_dir
+        self.known_faces = self.load_faces()
+
+    def load_faces(self):
+        if not os.path.exists(self.faces_dir):
+            print(f"⚠️ Faces directory '{self.faces_dir}' not found.")
+            return []
+        faces = []
+        for filename in os.listdir(self.faces_dir):
+            if filename.endswith((".jpg", ".png")):
+                name = os.path.splitext(filename)[0]
+                path = os.path.join(self.faces_dir, filename)
+                faces.append((name, path))
+        print(f"✅ Loaded {len(faces)} known faces.")
+        return faces
+
+    def recognize(self, frame, person_box):
+        x1, y1, x2, y2 = person_box
+        person_roi = frame[y1:y2, x1:x2]
+        name = "Unknown"
+        try:
+            for known_name, known_path in self.known_faces:
+                result = DeepFace.verify(person_roi, known_path, enforce_detection=False)
+                if result["verified"]:
+                    name = known_name
+                    break
+        except Exception as e:
+            print(f"[FaceRec ERROR] {e}")
+        cv2.putText(frame, name, (x1, y2 + 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+        return frame, name
+
+class EmotionRecognizer:
+    """DeepFace-based emotion analysis"""
+    def analyze(self, frame, person_box):
+        x1, y1, x2, y2 = person_box
+        person_roi = frame[y1:y2, x1:x2]
+        emotion = "Analyzing..."
+        try:
+            result = DeepFace.analyze(person_roi,
+                                      actions=['emotion'],
+                                      enforce_detection=False)
+            if isinstance(result, list):
+                result = result[0]
+            emotion = result["dominant_emotion"]
+        except Exception as e:
+            print(f"[Emotion ERROR] {e}")
+        cv2.putText(frame, emotion, (x1, y1 - 35),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        return frame, emotion
+
+class ActivityRecognizer:
+    """Pose-based activity recognition"""
+    def __init__(self, model_path="yolov8n-pose.pt"):
+        self.model = YOLO(model_path)
+
+    def classify_activity(self, keypoints):
+        activity = "Unknown"
+        if keypoints is None or len(keypoints) < 17:
+            return activity
+        l_hip, r_hip = keypoints[11], keypoints[12]
+        l_knee, r_knee = keypoints[13], keypoints[14]
+        y_coords = keypoints[:, 1]
+        x_coords = keypoints[:, 0]
+        height = max(y_coords) - min(y_coords)
+        width = max(x_coords) - min(x_coords)
+        if width > height * 1.4:
+            activity = "Falling"
+        elif abs(l_hip[1] - l_knee[1]) < 40 and abs(r_hip[1] - r_knee[1]) < 40:
+            activity = "Sitting"
+        elif height > width * 1.2:
+            activity = "Standing"
+        else:
+            activity = "Walking/Moving"
+        return activity
+
+    def analyze(self, frame):
+        results = self.model(frame, verbose=False)
+        for result in results:
+            if result.keypoints is not None:
+                keypoints = result.keypoints.xy[0].cpu().numpy()
+                activity = self.classify_activity(keypoints)
+                x_min, y_min = int(min(keypoints[:, 0])), int(min(keypoints[:, 1]))
+                cv2.putText(frame, activity, (x_min, y_min - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+        return frame
+
+# ------------------- Camera Server -------------------
 class SimpleCameraServer:
     def __init__(self, camera_id: int = 0):
         self.camera_id = camera_id
@@ -21,26 +140,27 @@ class SimpleCameraServer:
         self.frame = None
         self._running = False
         self._frame_lock = threading.Lock()
-        
-        # Controlled externally via app.py
         self.active_modules = {"surveillance": False, "monitor": False}
 
-        # Background subtractor for motion detection
         self.background_subtractor = cv2.createBackgroundSubtractorMOG2(
             history=500, varThreshold=50, detectShadows=True
         )
-
-        # Haar cascade for human presence detection
         self.face_cascade = cv2.CascadeClassifier(
             cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
         )
 
-        self._file_lock = threading.Lock()
-        self._last_event_time = 0  # shared cooldown for events
+        # Person monitor placeholders (lazy loaded)
+        self.person_detector = None
+        self.person_recognizer = None
+        self.emotion_recognizer = None
+        self.activity_recognizer = None
 
+        self._file_lock = threading.Lock()
+        self._last_event_time = 0
         self.app = Flask(__name__)
         self.setup_routes()
 
+    # ------------------- Flask Routes -------------------
     def setup_routes(self):
         @self.app.route('/stream')
         def mjpeg_stream():
@@ -53,12 +173,12 @@ class SimpleCameraServer:
                                 frame_bytes = buffer.tobytes()
                                 yield (b'--frame\r\n'
                                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-                        time.sleep(0.033)  # ~30 FPS
+                        time.sleep(0.033)
                     except Exception as e:
                         print(f"❌ Error in MJPEG stream: {e}")
                         break
             return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-        
+
         @self.app.route('/api/status')
         def api_status():
             return jsonify(self.get_camera_info())
@@ -70,12 +190,12 @@ class SimpleCameraServer:
                 self.active_modules['surveillance'] = config['surveillance']
             if 'monitor' in config:
                 self.active_modules['monitor'] = config['monitor']
-            
             print(f"✅ Detection config updated: {self.active_modules}")
             return jsonify({"success": True, "message": "Config updated"})
 
+    # ------------------- Camera Control -------------------
     def start(self) -> bool:
-        if self._running: 
+        if self._running:
             return True
         try:
             self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_DSHOW)
@@ -93,7 +213,7 @@ class SimpleCameraServer:
         except Exception as e:
             print(f"❌ Camera start error: {e}")
             return False
-    
+
     def stop(self):
         self._running = False
         time.sleep(0.5)
@@ -101,79 +221,86 @@ class SimpleCameraServer:
             self.cap.release()
             self.cap = None
         print("✅ Camera capture stopped.")
-    
+
     def write_event_to_file(self, event):
-        """Safely append a single event to events.json."""
         with self._file_lock:
             try:
                 events_list = []
                 if os.path.exists(EVENTS_FILE) and os.path.getsize(EVENTS_FILE) > 0:
                     with open(EVENTS_FILE, 'r') as f:
                         events_list = json.load(f)
-                
                 events_list.insert(0, event)
                 with open(EVENTS_FILE, 'w') as f:
                     json.dump(events_list, f, indent=4)
             except (IOError, json.JSONDecodeError) as e:
                 print(f"❌ Error writing to {EVENTS_FILE}: {e}")
 
+    # ------------------- Frame Capture -------------------
     def capture_frames(self):
-        """Frame capture loop. Detects motion (surveillance) and human presence (monitor)."""
         while self._running and self.cap:
             ret, frame = self.cap.read()
             if not ret:
                 time.sleep(0.1)
                 continue
-            
+
             processed_frame = frame.copy()
             current_time = time.time()
-            event_logged = False
 
-            # --- Surveillance: Motion Detection ---
+            # ----- Surveillance: Motion Detection -----
             if self.active_modules['surveillance']:
                 fg_mask = self.background_subtractor.apply(processed_frame)
                 fg_mask = cv2.threshold(fg_mask, 200, 255, cv2.THRESH_BINARY)[1]
                 fg_mask = cv2.dilate(fg_mask, None, iterations=2)
                 contours, _ = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                
                 motion_detected = any(cv2.contourArea(c) > 1000 for c in contours)
                 if motion_detected:
                     for c in contours:
                         if cv2.contourArea(c) > 1000:
                             (x, y, w, h) = cv2.boundingRect(c)
                             cv2.rectangle(processed_frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-
                     if current_time - self._last_event_time > 5:
                         self._last_event_time = current_time
-                        self.write_event_to_file({"timestamp": int(current_time), "module": "surveillance", "class_name": "Motion"})
-                        event_logged = True
+                        self.write_event_to_file({"timestamp": int(current_time),
+                                                  "module": "surveillance",
+                                                  "class_name": "Motion"})
 
-            # --- Monitor Me: Human Presence Detection ---
+            # ----- Monitor Me: Lazy-load YOLO + DeepFace -----
             if self.active_modules['monitor']:
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5, minSize=(40, 40))
-                
-                for (x, y, w, h) in faces:
-                    cv2.rectangle(processed_frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+                if self.person_detector is None:
+                    print("⏳ Loading YOLO + DeepFace models...")
+                    self.person_detector = ObjectDetector()
+                    self.person_recognizer = PersonRecognizer(faces_dir="faces")
+                    self.emotion_recognizer = EmotionRecognizer()
+                    self.activity_recognizer = ActivityRecognizer()
+                    print("✅ Models loaded.")
 
-                if len(faces) > 0 and (current_time - self._last_event_time > 5):
-                    self._last_event_time = current_time
-                    self.write_event_to_file({"timestamp": int(current_time), "module": "monitor", "class_name": "Person"})
-                    event_logged = True
+                # Detect persons
+                processed_frame, person_boxes = self.person_detector.detect(processed_frame, target_class='person')
+                if person_boxes:
+                    for box in person_boxes:
+                        processed_frame, name = self.person_recognizer.recognize(processed_frame, box)
+                        processed_frame, emotion = self.emotion_recognizer.analyze(processed_frame, box)
+                        if current_time - self._last_event_time > 5:
+                            self._last_event_time = current_time
+                            self.write_event_to_file({"timestamp": int(current_time),
+                                                      "module": "monitor",
+                                                      "class_name": f"Person:{name}:{emotion}"})
+                processed_frame = self.activity_recognizer.analyze(processed_frame)
 
+            # Update frame
             with self._frame_lock:
                 self.frame = processed_frame
-    
+
     def start_capture_thread(self):
-        capture_thread = threading.Thread(target=self.capture_frames, daemon=True)
-        capture_thread.start()
-    
+        threading.Thread(target=self.capture_frames, daemon=True).start()
+
     def get_camera_info(self):
         return {"is_running": self._running}
-    
+
     def run_server(self, host='0.0.0.0', port=5001, debug=False):
         self.app.run(host=host, port=port, debug=debug, threaded=True)
 
+# ------------------- Main -------------------
 if __name__ == "__main__":
     camera = SimpleCameraServer(camera_id=0)
     if camera.start():

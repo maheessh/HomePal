@@ -19,7 +19,7 @@ from deepface import DeepFace
 EVENTS_FILE = 'events.json'
 CAPTURES_DIR = 'captured_images'
 
-# --- Person Monitor Classes (No changes needed) ---
+# ------------------- Person Monitor Classes (No changes needed) -------------------
 class ObjectDetector:
     """YOLO person detector"""
     def __init__(self, model_path='yolov8n.pt'):
@@ -74,6 +74,7 @@ class PersonRecognizer:
                     name = known_name
                     break
         except Exception as e:
+            # DeepFace can throw errors if no face is found in ROI, which is expected
             pass
         cv2.putText(frame, name, (x1, y2 + 20),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
@@ -93,6 +94,7 @@ class EmotionRecognizer:
                 result = result[0]
             emotion = result["dominant_emotion"]
         except Exception as e:
+            # Expected if no face is clearly visible
             pass
         cv2.putText(frame, emotion, (x1, y1 - 35),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
@@ -108,13 +110,16 @@ class ActivityRecognizer:
         if keypoints is None or len(keypoints) < 17:
             return activity
         
+        # Check if keypoints have confidence scores (3rd dimension)
         has_confidence = keypoints.shape[1] == 3
         
+        # Define keypoint indices
         L_HIP, R_HIP = 11, 12
         L_KNEE, R_KNEE = 13, 14
         
+        # Basic check if keypoints are detected with minimum confidence
         if has_confidence and (keypoints[L_HIP][2] < 0.5 or keypoints[R_HIP][2] < 0.5):
-            return "Standing"
+            return "Standing" # Default if hips are not clear
         
         l_hip_pt, r_hip_pt = keypoints[L_HIP], keypoints[R_HIP]
         l_knee_pt, r_knee_pt = keypoints[L_KNEE], keypoints[R_KNEE]
@@ -124,7 +129,7 @@ class ActivityRecognizer:
         height = max(y_coords) - min(y_coords)
         width = max(x_coords) - min(x_coords)
 
-        if height < 10 or width < 10: return "Unknown"
+        if height < 10 or width < 10: return "Unknown" # Avoid division by zero for tiny skeletons
 
         if width > height * 1.4:
             activity = "Falling"
@@ -142,7 +147,7 @@ class ActivityRecognizer:
         for result in results:
             if result.keypoints is not None and len(result.keypoints.xy) > 0:
                 keypoints_tensor = result.keypoints.xy[0]
-                if keypoints_tensor.numel() > 0:
+                if keypoints_tensor.numel() > 0: # Check if tensor is not empty
                     keypoints = keypoints_tensor.cpu().numpy()
                     activity = self.classify_activity(keypoints)
                     x_min, y_min = int(min(keypoints[:, 0])), int(min(keypoints[:, 1]))
@@ -155,19 +160,17 @@ class SimpleCameraServer:
     def __init__(self, camera_id: int = 0):
         self.camera_id = camera_id
         self.cap = None
-        self.frame = None 
-        self.raw_frame = None
+        self.frame = None # This will hold the latest processed frame for the stream
+        self.raw_frame = None # This will hold the latest raw frame for captures
         self._running = False
         self._frame_lock = threading.Lock()
         self.active_modules = {"surveillance": False, "monitor": False}
-
-        self.event_cooldown = 60
-        self.motion_threshold = 5000
 
         self.background_subtractor = cv2.createBackgroundSubtractorMOG2(
             history=500, varThreshold=50, detectShadows=True
         )
         
+        # Person monitor placeholders (lazy loaded)
         self.person_detector = None
         self.person_recognizer = None
         self.emotion_recognizer = None
@@ -214,6 +217,7 @@ class SimpleCameraServer:
         if self._running:
             return True
         try:
+            # Try to use DSHOW backend for Windows for better performance
             self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_DSHOW)
             if not self.cap.isOpened():
                 self.cap = cv2.VideoCapture(self.camera_id)
@@ -225,6 +229,7 @@ class SimpleCameraServer:
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
             self._running = True
             
+            # Ensure the captures directory exists
             if not os.path.exists(CAPTURES_DIR):
                 os.makedirs(CAPTURES_DIR)
 
@@ -243,7 +248,9 @@ class SimpleCameraServer:
         print("✅ Camera capture stopped.")
 
     def _create_and_save_event(self, event_data):
+        """Captures image and writes event to file."""
         with self._file_lock:
+            # Capture the image
             filename = f"event_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.jpg"
             filepath = os.path.join(CAPTURES_DIR, filename)
             
@@ -254,11 +261,12 @@ class SimpleCameraServer:
 
             if local_raw_frame is not None:
                 cv2.imwrite(filepath, local_raw_frame)
-                event_data["image_path"] = filename
+                event_data["image_path"] = filename # Add image path to event
             else:
-                event_data["image_path"] = None
+                event_data["image_path"] = None # No image available
                 print("⚠️ Could not capture image; raw_frame is None.")
 
+            # Append to events.json
             try:
                 events_list = []
                 if os.path.exists(EVENTS_FILE) and os.path.getsize(EVENTS_FILE) > 0:
@@ -280,16 +288,13 @@ class SimpleCameraServer:
                 continue
 
             with self._frame_lock:
-                self.raw_frame = frame.copy()
+                self.raw_frame = frame.copy() # Store raw frame for saving
 
             processed_frame = frame.copy()
             current_time = time.time()
-            
-            on_cooldown = (current_time - self._last_event_time) < self.event_cooldown
-            
+
             # ----- Surveillance: Motion Detection -----
             if self.active_modules['surveillance']:
-                # Run detection regardless of cooldown for live view
                 fg_mask = self.background_subtractor.apply(processed_frame)
                 fg_mask = cv2.threshold(fg_mask, 200, 255, cv2.THRESH_BINARY)[1]
                 fg_mask = cv2.dilate(fg_mask, None, iterations=2)
@@ -297,18 +302,18 @@ class SimpleCameraServer:
                 
                 motion_detected = False
                 for c in contours:
-                    if cv2.contourArea(c) > self.motion_threshold:
+                    if cv2.contourArea(c) > 1000:
                         motion_detected = True
                         (x, y, w, h) = cv2.boundingRect(c)
                         cv2.rectangle(processed_frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
                 
-                if motion_detected and not on_cooldown:
-                    self._last_event_time = current_time 
+                if motion_detected and (current_time - self._last_event_time > 5):
+                    self._last_event_time = current_time
                     event = {
                         "id": str(uuid.uuid4()),
                         "timestamp": datetime.datetime.now().isoformat(),
                         "module": "surveillance",
-                        "class_name": "Major Motion",
+                        "class_name": "Motion",
                         "description": ""
                     }
                     self._create_and_save_event(event)
@@ -323,23 +328,17 @@ class SimpleCameraServer:
                     self.activity_recognizer = ActivityRecognizer()
                     print("✅ Models loaded.")
 
-                # Always run analysis for the live view
                 processed_frame, person_boxes = self.person_detector.detect(processed_frame, target_class='person')
                 processed_frame, activity = self.activity_recognizer.analyze(processed_frame)
-                
-                if person_boxes:
-                    for box in person_boxes:
-                         self.person_recognizer.recognize(processed_frame, box)
-                         self.emotion_recognizer.analyze(processed_frame, box)
-                
-                # --- MODIFIED: Only trigger event capture for "Falling" ---
-                if person_boxes and activity == "Falling" and not on_cooldown:
-                    self._last_event_time = current_time 
-                    box = person_boxes[0] # Log details for the first person detected
+
+                if person_boxes and (current_time - self._last_event_time > 5):
+                    self._last_event_time = current_time
+                    # Process the first person found for the event log
+                    box = person_boxes[0]
                     _, name = self.person_recognizer.recognize(processed_frame, box)
                     _, emotion = self.emotion_recognizer.analyze(processed_frame, box)
                     
-                    event_details = f"Major Event: {activity}, Person: {name}, Emotion: {emotion}"
+                    event_details = f"Person: {name}, Emotion: {emotion}, Activity: {activity}"
                     
                     event = {
                         "id": str(uuid.uuid4()),
@@ -349,6 +348,11 @@ class SimpleCameraServer:
                         "description": ""
                     }
                     self._create_and_save_event(event)
+                
+                # Still draw boxes for all people in the live feed
+                for box in person_boxes:
+                     self.person_recognizer.recognize(processed_frame, box)
+                     self.emotion_recognizer.analyze(processed_frame, box)
 
             with self._frame_lock:
                 self.frame = processed_frame

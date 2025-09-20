@@ -43,10 +43,14 @@
         background-color: #5a67d8;
       }
       .card {
-        background-color: rgba(23, 23, 23, 0.5);
+        background-color: rgba(23, 23, 23, 0.6);
         border: 1px solid #2d2d2d;
         backdrop-filter: blur(10px);
         transition: all 0.3s ease-in-out;
+        box-shadow: 0 0 15px rgba(76, 59, 171, 0.05);
+      }
+       .card:hover {
+        border-color: #4c3bab;
       }
       .nav-link {
         transition: all 0.2s ease-in-out;
@@ -71,156 +75,135 @@
         opacity: 1;
         margin-top: 1.5rem;
       }
+      .tab-button {
+        transition: all 0.2s ease;
+        border-bottom: 2px solid transparent;
+        padding-bottom: 0.5rem;
+      }
+      .tab-button.active {
+        color: #818cf8;
+        border-color: #818cf8;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .spinner {
+        animation: spin 1s linear infinite;
+      }
     </style>
   </head>
   <body class="text-gray-300">
     <div class="main-content flex flex-col min-h-screen">
       <!-- Header -->
-      <header
-        class="border-b border-gray-800/50 sticky top-0 z-50 backdrop-blur-md"
-      >
+      <header class="border-b border-gray-800/50 sticky top-0 z-50 backdrop-blur-md">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex items-center justify-between h-16">
             <div class="flex items-center space-x-3">
-              <svg
-                class="h-8 w-8 text-indigo-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
+              <svg class="h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
               <h1 class="text-2xl font-bold text-white">Aegis AI</h1>
             </div>
             <nav class="hidden md:flex items-center space-x-8">
               <a href="/" class="nav-link">Dashboard</a>
-              <a href="/surveillance" class="nav-link active"
-                >Home Surveillance</a
-              >
+              <a href="/surveillance" class="nav-link active">Home Surveillance</a>
               <a href="/monitor" class="nav-link">Monitor Me</a>
             </nav>
             <div class="md:hidden">
-              <button
-                id="mobile-menu-button"
-                class="text-gray-300 hover:text-white focus:outline-none"
-              >
-                <svg
-                  class="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4 6h16M4 12h16m-7 6h7"
-                  />
-                </svg>
-              </button>
+                <button id="mobile-menu-button" class="text-gray-300 hover:text-white focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+                    </svg>
+                </button>
             </div>
           </div>
         </div>
         <div id="mobile-menu" class="hidden md:hidden">
           <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <a href="/" class="nav-link-mobile">Dashboard</a>
-            <a href="/surveillance" class="nav-link-mobile active"
-              >Home Surveillance</a
-            >
-            <a href="/monitor" class="nav-link-mobile">Monitor Me</a>
+            <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">Dashboard</a>
+            <a href="/surveillance" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-gray-900">Home Surveillance</a>
+            <a href="/monitor" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">Monitor Me</a>
           </div>
         </div>
       </header>
 
       <!-- Main Content -->
-      <main class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
-        <div class="card p-6 max-w-2xl mx-auto">
-          <div class="flex justify-between items-start">
+      <main class="flex-grow container mx-auto p-4 sm:p-6 lg:px-8">
+        <div class="card p-6 lg:p-8 max-w-4xl mx-auto">
+          <div class="flex justify-between items-start mb-6">
             <div>
-              <h3 class="text-xl font-semibold text-white">
-                Home Surveillance
-              </h3>
-              <p class="text-gray-400 mt-2 text-sm">
-                Monitors camera feeds for unusual activity.
-              </p>
+              <h3 class="text-xl font-semibold text-white">Home Surveillance</h3>
+              <p class="text-gray-400 mt-2 text-sm">Monitors camera feeds for unusual activity.</p>
             </div>
             <div class="flex items-center space-x-2">
-              <span class="text-sm font-medium text-gray-400 status-text"
-                >Off</span
-              >
+              <span class="text-sm font-medium text-gray-400 status-text">Off</span>
               <div class="relative inline-block w-10 align-middle select-none">
-                <input
-                  type="checkbox"
-                  name="toggle"
-                  id="surveillance-toggle"
-                  class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
-                  data-system="surveillance"
-                />
-                <label
-                  for="surveillance-toggle"
-                  class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer"
-                ></label>
+                <input type="checkbox" name="toggle" id="surveillance-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" data-system="surveillance" />
+                <label for="surveillance-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer"></label>
               </div>
             </div>
           </div>
-          <div id="video-container" class="video-container">
-            <div class="relative bg-black rounded-lg overflow-hidden">
-              <img
-                id="cameraStream"
-                src=""
-                alt="Camera Stream"
-                class="w-full h-auto"
-              />
+
+          <div class="border-b border-gray-700 mb-4">
+            <nav class="flex space-x-6" aria-label="Tabs">
+              <button id="tab-live" class="tab-button active text-sm font-medium">Live Feed</button>
+              <button id="tab-events" class="tab-button text-sm font-medium">Captured Events</button>
+            </nav>
+          </div>
+
+          <div id="active-content-container">
+            <div id="video-container" class="video-container">
+                <div class="relative bg-black rounded-lg overflow-hidden aspect-video">
+                    <!-- NEW: Camera Loading Placeholder -->
+                    <div id="camera-loader" class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-lg z-10">
+                        <div class="spinner h-8 w-8 rounded-full border-4 border-t-indigo-500 border-gray-600"></div>
+                        <p class="mt-3 text-sm text-gray-400">Initializing Camera...</p>
+                    </div>
+                    <img id="cameraStream" src="" alt="Camera Stream" class="w-full h-auto hidden" />
+                </div>
+            </div>
+
+            <div id="surveillance-analysis" class="activity-log bg-black/20 p-6 mt-6 rounded-md">
+                <h4 class="font-semibold text-xl text-white mb-6">Last 24 Hours - Camera Detections</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- IMPROVED Summary Card UI -->
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700 flex items-center space-x-4">
+                        <div class="bg-indigo-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
+                        <div>
+                            <p id="summary-people-detected" class="text-2xl font-bold text-white">--</p>
+                            <p class="text-sm text-gray-400">People Detected</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700 flex items-center space-x-4">
+                        <div class="bg-indigo-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"></path><path d="M7.07 14.94c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3c0-1.45-1.02-2.68-2.36-2.93"></path><path d="m14.94 7.07c0 1.66-1.34 3-3 3s-3-1.34-3-3c0-1.45 1.02-2.68 2.36-2.93"></path></svg></div>
+                        <div>
+                            <p id="summary-motion-events" class="text-2xl font-bold text-white">--</p>
+                            <p class="text-sm text-gray-400">Motion Events</p>
+                        </div>
+                    </div>
+                    <div class="bg-red-900/50 p-4 rounded-lg border border-red-700/50 flex items-center space-x-4">
+                         <div class="bg-red-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg></div>
+                        <div>
+                            <p id="summary-fire-alerts" class="text-2xl font-bold text-white">--</p>
+                            <p class="text-sm text-gray-400">Fire Alerts</p>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h5 class="font-medium text-lg text-white mb-3">Recent Detections</h5>
+                    <div id="surveillance-timeline" class="space-y-3 h-96 overflow-y-auto pr-2"></div>
+                </div>
             </div>
           </div>
-          
-          <!-- Camera Detections Section -->
-          <div id="surveillance-analysis" class="activity-log bg-black/20 p-6 mt-6 rounded-md">
-            <div class="flex items-center justify-between mb-6">
-              <h4 class="font-semibold text-xl text-white">
-                Last 24 Hours - Camera Detections
-              </h4>
-            </div>
 
-            <!-- Detection Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <p id="summary-people-detected" class="text-2xl font-bold text-white">--</p>
-                <p class="text-sm text-gray-400">People Detected</p>
-              </div>
-              <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <p id="summary-motion-events" class="text-2xl font-bold text-white">--</p>
-                <p class="text-sm text-gray-400">Motion Events</p>
-              </div>
-              <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <p id="summary-fire-alerts" class="text-2xl font-bold text-white">--</p>
-                <p class="text-sm text-gray-400">Fire Alerts</p>
-              </div>
-            </div>
-
-            <!-- Detection Timeline -->
-            <div>
-              <h5 class="font-medium text-lg text-white mb-3">
-                Recent Detections
-              </h5>
-              <div id="surveillance-timeline" class="space-y-3 h-96 overflow-y-auto">
-                <!-- Log entries will be injected here -->
-              </div>
-            </div>
+          <div id="event-gallery-container" class="hidden">
+            <div id="event-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
           </div>
         </div>
       </main>
 
       <footer class="border-t border-gray-800/50 mt-12">
-        <div
-          class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm"
-        >
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
           &copy; 2025 Aegis AI. All Rights Reserved.
         </div>
       </footer>
@@ -230,20 +213,28 @@
       document.addEventListener("DOMContentLoaded", () => {
         const MODULE_NAME = "surveillance";
         const toggle = document.getElementById("surveillance-toggle");
+        const statusText = document.querySelector(".status-text");
         const mobileMenuButton = document.getElementById("mobile-menu-button");
         const mobileMenu = document.getElementById("mobile-menu");
-        const cameraStream = document.getElementById("cameraStream");
-        const videoContainer = document.getElementById("video-container");
-        const logContainer = document.getElementById("surveillance-analysis");
-        const statusText = document.querySelector(".status-text");
-        const timelineContainer = document.getElementById("surveillance-timeline");
 
-        // Summary card elements
+        const activeContentContainer = document.getElementById("active-content-container");
+        const videoContainer = document.getElementById("video-container");
+        const cameraLoader = document.getElementById("camera-loader");
+        const cameraStream = document.getElementById("cameraStream");
+        const logContainer = document.getElementById("surveillance-analysis");
+        const timelineContainer = document.getElementById("surveillance-timeline");
         const peopleDetectedEl = document.getElementById("summary-people-detected");
         const motionEventsEl = document.getElementById("summary-motion-events");
         const fireAlertsEl = document.getElementById("summary-fire-alerts");
+
+        const galleryContainer = document.getElementById("event-gallery-container");
+        const gallery = document.getElementById("event-gallery");
         
-        let eventPollingInterval = null;
+        const tabLive = document.getElementById("tab-live");
+        const tabEvents = document.getElementById("tab-events");
+
+        let livePollingInterval = null;
+        let galleryPollingInterval = null;
 
         const setModuleState = async (active) => {
           try {
@@ -272,43 +263,45 @@
         };
 
         const updateUI = (isActive) => {
+          statusText.textContent = isActive ? "On" : "Off";
+          statusText.classList.toggle("text-green-400", isActive);
+          statusText.classList.toggle("text-gray-400", !isActive);
+          
           if (isActive) {
-            statusText.textContent = "On";
-            statusText.classList.add("text-green-400");
-            statusText.classList.remove("text-gray-400");
             videoContainer.classList.add("active");
-            cameraStream.src = `/stream?t=${new Date().getTime()}`;
             logContainer.classList.add("active");
-            startEventPolling();
+            cameraLoader.classList.remove('hidden');
+            cameraStream.classList.add('hidden');
+            cameraStream.src = `/stream?t=${new Date().getTime()}`;
+            if (tabLive.classList.contains('active')) startLivePolling();
+            if (tabEvents.classList.contains('active')) startGalleryPolling();
           } else {
-            statusText.textContent = "Off";
-            statusText.classList.remove("text-green-400");
-            statusText.classList.add("text-gray-400");
             cameraStream.src = "";
             videoContainer.classList.remove("active");
             logContainer.classList.remove("active");
-            stopEventPolling();
+            cameraLoader.classList.remove('hidden');
+            cameraStream.classList.add('hidden');
+            stopAllPolling();
           }
         };
         
-        const fetchEvents = async () => {
+        const fetchLiveEvents = async () => {
             try {
-                const response = await fetch(`/api/events/all?module=${MODULE_NAME}`);
+                const response = await fetch(`/api/events?module=${MODULE_NAME}`);
                 const data = await response.json();
                 if (data.success) {
                     updateActivityTimeline(data.events);
                     updateSummaryCards(data.events);
                 }
             } catch (error) {
-                console.error("Error fetching events:", error);
+                console.error("Error fetching live events:", error);
             }
         };
         
         const updateSummaryCards = (events) => {
-            const peopleCount = events.filter(e => e.class_name.toLowerCase() === 'person').length;
-            const motionCount = events.filter(e => e.class_name.toLowerCase() === 'motion').length;
-            const fireCount = events.filter(e => e.class_name.toLowerCase() === 'fire').length;
-
+            const peopleCount = events.filter(e => e.class_name.toLowerCase().includes('person')).length;
+            const motionCount = events.filter(e => e.class_name.toLowerCase().includes('motion')).length;
+            const fireCount = events.filter(e => e.class_name.toLowerCase().includes('fire')).length;
             peopleDetectedEl.textContent = peopleCount;
             motionEventsEl.textContent = motionCount;
             fireAlertsEl.textContent = fireCount;
@@ -316,46 +309,120 @@
         
         const updateActivityTimeline = (events) => {
             if (events.length === 0) {
-                timelineContainer.innerHTML = `<p class="text-gray-500">No recent detections.</p>`;
+                timelineContainer.innerHTML = `<p class="text-gray-500 text-center py-4">No recent detections.</p>`;
                 return;
             }
             timelineContainer.innerHTML = events.map((event) => {
-                const time = new Date(event.timestamp * 1000).toLocaleTimeString();
-                const isAlert = ["person", "car", "animal", "fire"].includes(event.class_name.toLowerCase());
-                const borderColor = isAlert ? 'border-amber-400' : 'border-green-400';
-                
+                // FIXED: Use the full ISO string for accurate date parsing
+                const time = new Date(event.timestamp).toLocaleString();
+                const isAlert = ["person", "car", "animal", "fire", "major"].some(keyword => event.class_name.toLowerCase().includes(keyword));
+                const borderColor = isAlert ? 'border-amber-500' : 'border-indigo-500';
+                const iconColor = isAlert ? 'text-amber-400' : 'text-indigo-400';
+                const icon = isAlert ?
+                    `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${iconColor}"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`:
+                    `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${iconColor}"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg>`;
+
                 return `
-                    <div class="flex items-center space-x-4 p-3 bg-gray-800/30 rounded-lg border-l-4 ${borderColor}">
-                        <div class="flex-grow">
-                            <div class="flex items-center justify-between">
-                                <p class="text-white font-medium">Detected: <strong>${event.class_name}</strong></p>
-                                <span class="text-xs text-gray-400">${time}</span>
-                            </div>
-                            <p class="text-sm text-gray-400">
-                                Confidence: ${Math.round(event.confidence * 100)}%
-                            </p>
-                        </div>
-                    </div>`;
+                <div class="flex items-center space-x-4 p-3 bg-gray-800/30 rounded-lg border-l-4 ${borderColor}">
+                    <div>${icon}</div>
+                    <div class="flex-grow">
+                         <p class="text-white font-medium truncate"><strong>${event.class_name}</strong> detected</p>
+                         <p class="text-xs text-gray-400 font-mono">${time}</p>
+                    </div>
+                </div>`;
             }).join("");
         };
-
-        const startEventPolling = () => {
-            if (eventPollingInterval) return;
-            fetchEvents();
-            eventPollingInterval = setInterval(fetchEvents, 3000);
+        
+        const fetchGalleryEvents = async () => {
+            try {
+                const response = await fetch(`/api/events?module=${MODULE_NAME}`);
+                const data = await response.json();
+                if (data.success) {
+                    renderEventGallery(data.events);
+                }
+            } catch (error) {
+                console.error("Error fetching gallery events:", error);
+                gallery.innerHTML = `<p class="text-gray-500 col-span-full">Could not load events.</p>`;
+            }
         };
 
-        const stopEventPolling = () => {
-            clearInterval(eventPollingInterval);
-            eventPollingInterval = null;
+        const renderEventGallery = (events) => {
+            if (events.length === 0) {
+                gallery.innerHTML = `<p class="text-gray-500 col-span-full text-center py-8">No captured event images yet.</p>`;
+                return;
+            }
+            gallery.innerHTML = events.map(event => {
+                const time = new Date(event.timestamp).toLocaleString();
+                const imagePath = event.image_path ? `/captured_images/${event.image_path}` : 'https://placehold.co/600x400/171717/FFF?text=No+Image';
+                return `
+                <div class="card overflow-hidden transition-all duration-300 hover:border-indigo-500 hover:scale-[1.02]" data-event-id="${event.id}">
+                    <div class="p-4 cursor-pointer event-card-header">
+                        <p class="font-semibold text-white truncate">${event.class_name}</p>
+                        <p class="text-xs text-gray-400">${time}</p>
+                    </div>
+                    <div class="event-card-details hidden p-4 pt-0">
+                        <img src="${imagePath}" alt="Event capture" class="rounded-md mb-3 w-full h-auto object-cover"/>
+                        <p class="text-sm text-gray-300 bg-black/20 p-3 rounded-md">
+                           <span class="font-semibold text-indigo-400">AI Analysis:</span> ${event.description || '<i class="text-gray-500">Generating...</i>'}
+                        </p>
+                    </div>
+                </div>`;
+            }).join('');
+            document.querySelectorAll('.event-card-header').forEach(header => {
+                header.addEventListener('click', () => header.nextElementSibling.classList.toggle('hidden'));
+            });
+        };
+
+        const startLivePolling = () => {
+            stopAllPolling();
+            if (toggle.checked) {
+              fetchLiveEvents();
+              livePollingInterval = setInterval(fetchLiveEvents, 3000);
+            }
+        };
+        const startGalleryPolling = () => {
+            stopAllPolling();
+            if (toggle.checked) {
+              fetchGalleryEvents();
+              galleryPollingInterval = setInterval(fetchGalleryEvents, 5000);
+            }
+        };
+        const stopAllPolling = () => {
+            clearInterval(livePollingInterval);
+            clearInterval(galleryPollingInterval);
+            livePollingInterval = null;
+            galleryPollingInterval = null;
         };
         
         mobileMenuButton.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
+        toggle.addEventListener("change", (e) => setModuleState(e.target.checked).then(() => updateUI(e.target.checked)));
 
-        toggle.addEventListener("change", (e) => {
-            const isChecked = e.target.checked;
-            setModuleState(isChecked);
-            updateUI(isChecked);
+        cameraStream.onload = () => {
+            if(cameraStream.src.includes('stream')){
+                cameraLoader.classList.add('hidden');
+                cameraStream.classList.remove('hidden');
+            }
+        };
+        cameraStream.onerror = () => {
+            cameraLoader.querySelector('p').textContent = 'Stream unavailable.';
+            cameraLoader.classList.remove('hidden');
+            cameraStream.classList.add('hidden');
+        };
+
+        tabLive.addEventListener('click', () => {
+            tabLive.classList.add('active');
+            tabEvents.classList.remove('active');
+            activeContentContainer.classList.remove('hidden');
+            galleryContainer.classList.add('hidden');
+            startLivePolling();
+        });
+
+        tabEvents.addEventListener('click', () => {
+            tabEvents.classList.add('active');
+            tabLive.classList.remove('active');
+            activeContentContainer.classList.add('hidden');
+            galleryContainer.classList.remove('hidden');
+            startGalleryPolling();
         });
 
         fetchSystemState();
@@ -363,4 +430,3 @@
     </script>
   </body>
 </html>
-

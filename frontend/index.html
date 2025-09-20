@@ -36,10 +36,14 @@
         z-index: 1;
       }
       .card {
-        background-color: rgba(23, 23, 23, 0.5);
+        background-color: rgba(23, 23, 23, 0.6);
         border: 1px solid #2d2d2d;
         backdrop-filter: blur(10px);
         transition: all 0.3s ease-in-out;
+        box-shadow: 0 0 15px rgba(76, 59, 171, 0.05);
+      }
+      .card:hover {
+         border-color: #4c3bab;
       }
       .nav-link {
         transition: all 0.2s ease-in-out;
@@ -56,30 +60,24 @@
       .toggle-checkbox:checked + .toggle-label {
         background-color: #5a67d8;
       }
+       /* Loading Spinner Animation */
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .spinner {
+        animation: spin 1s linear infinite;
+      }
     </style>
   </head>
   <body class="text-gray-300">
     <div class="main-content flex flex-col min-h-screen">
       <!-- Header -->
-      <header
-        class="border-b border-gray-800/50 sticky top-0 z-50 backdrop-blur-md"
-      >
+      <header class="border-b border-gray-800/50 sticky top-0 z-50 backdrop-blur-md">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex items-center justify-between h-16">
             <div class="flex items-center space-x-3">
-              <svg
-                class="h-8 w-8 text-indigo-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
+              <svg class="h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
               </svg>
               <h1 class="text-2xl font-bold text-white">Aegis AI</h1>
             </div>
@@ -89,22 +87,9 @@
               <a href="/monitor" class="nav-link">Monitor Me</a>
             </nav>
             <div class="md:hidden">
-              <button
-                id="mobile-menu-button"
-                class="text-gray-300 hover:text-white focus:outline-none"
-              >
-                <svg
-                  class="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4 6h16M4 12h16m-7 6h7"
-                  />
+              <button id="mobile-menu-button" class="text-gray-300 hover:text-white focus:outline-none">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
                 </svg>
               </button>
             </div>
@@ -112,11 +97,9 @@
         </div>
         <div id="mobile-menu" class="hidden md:hidden">
           <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <a href="/" class="nav-link-mobile active">Dashboard</a>
-            <a href="/surveillance" class="nav-link-mobile"
-              >Home Surveillance</a
-            >
-            <a href="/monitor" class="nav-link-mobile">Monitor Me</a>
+            <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-gray-900">Dashboard</a>
+            <a href="/surveillance" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">Home Surveillance</a>
+            <a href="/monitor" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">Monitor Me</a>
           </div>
         </div>
       </header>
@@ -132,29 +115,46 @@
 
         <!-- Event Summary -->
         <div class="card p-6 max-w-4xl mx-auto mb-8">
-            <h3 class="text-xl font-semibold text-white mb-4">Event Summary</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+          <div class="flex justify-between items-center mb-4">
+              <h3 class="text-xl font-semibold text-white">Event Summary</h3>
+              <button id="refresh-button" class="text-indigo-400 hover:text-indigo-300 transition-colors text-sm font-medium flex items-center space-x-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                  <span>Refresh</span>
+              </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-gray-800/50 p-4 rounded-lg flex items-center space-x-4">
+                <div class="bg-indigo-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg></div>
                 <div>
-                    <p class="text-3xl font-bold text-indigo-400" id="summary-total-events">--</p>
-                    <p class="text-sm text-gray-400">Total Events Logged</p>
-                </div>
-                <div>
-                    <p class="text-3xl font-bold text-indigo-400" id="summary-events-today">--</p>
-                    <p class="text-sm text-gray-400">Events Today</p>
-                </div>
-                <div>
-                    <p class="text-lg font-semibold text-indigo-400" id="summary-last-event">--</p>
-                    <p class="text-sm text-gray-400">Last Event Time</p>
+                  <p class="text-3xl font-bold text-indigo-400" id="summary-total-events">--</p>
+                  <p class="text-sm text-gray-400">Total Events</p>
                 </div>
             </div>
+            <div class="bg-gray-800/50 p-4 rounded-lg flex items-center space-x-4">
+                <div class="bg-indigo-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
+                <div>
+                  <p class="text-3xl font-bold text-indigo-400" id="summary-events-today">--</p>
+                  <p class="text-sm text-gray-400">Events Today</p>
+                </div>
+            </div>
+            <div class="bg-gray-800/50 p-4 rounded-lg flex items-center space-x-4">
+                <div class="bg-indigo-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M12 6v6l4 2"></path></svg></div>
+                <div>
+                  <p class="text-lg font-semibold text-indigo-400" id="summary-last-event">--</p>
+                  <p class="text-sm text-gray-400">Last Event Time</p>
+                </div>
+            </div>
+          </div>
         </div>
 
         <!-- Interactive System Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
-          <!-- Home Surveillance Card -->
-          <div class="card p-6">
+          <a href="/surveillance" class="card p-6 block hover:border-indigo-500">
             <div class="flex justify-between items-center mb-4">
-              <a href="/surveillance" class="text-xl font-semibold text-white hover:text-indigo-400 transition-colors">Home Surveillance</a>
+              <h4 class="text-xl font-semibold text-white flex items-center space-x-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <span>Home Surveillance</span>
+              </h4>
               <div class="flex items-center space-x-2">
                 <span class="text-sm font-medium text-gray-400 status-text" data-system="surveillance">Off</span>
                 <div class="relative inline-block w-10 align-middle select-none">
@@ -164,11 +164,13 @@
               </div>
             </div>
             <p class="text-sm text-gray-400">Monitors for motion, people, and other environmental events.</p>
-          </div>
-          <!-- Monitor Me Card -->
-          <div class="card p-6">
+          </a>
+          <a href="/monitor" class="card p-6 block hover:border-indigo-500">
             <div class="flex justify-between items-center mb-4">
-              <a href="/monitor" class="text-xl font-semibold text-white hover:text-indigo-400 transition-colors">Monitor Me</a>
+               <h4 class="text-xl font-semibold text-white flex items-center space-x-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                    <span>Monitor Me</span>
+                </h4>
               <div class="flex items-center space-x-2">
                 <span class="text-sm font-medium text-gray-400 status-text" data-system="monitor">Off</span>
                 <div class="relative inline-block w-10 align-middle select-none">
@@ -178,22 +180,33 @@
               </div>
             </div>
             <p class="text-sm text-gray-400">Personal wellness tracking and automated alerts.</p>
-          </div>
+          </a>
+        </div>
+        
+        <!-- NEW: AI Security Briefing Card -->
+        <div class="card p-6 max-w-4xl mx-auto mb-8">
+            <h3 class="text-xl font-semibold text-white mb-4">✨ AI Security Briefing</h3>
+            <div id="briefing-container">
+                <p class="text-sm text-gray-400 mb-4">Get an AI-powered summary of all system events from the last 24 hours.</p>
+                <button id="generate-briefing-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center w-full sm:w-auto">
+                    Generate Daily Briefing
+                </button>
+            </div>
+            <div id="briefing-result-container" class="hidden">
+                 <!-- Loading or result content will go here -->
+            </div>
         </div>
 
         <!-- Live Global Event Feed -->
         <div class="card p-6 max-w-4xl mx-auto">
-            <h3 class="text-xl font-semibold text-white mb-4">Live Global Event Feed</h3>
-            <div id="global-event-feed" class="space-y-3 h-96 overflow-y-auto">
-                <!-- Live events will be injected here by JavaScript -->
-            </div>
+          <h3 class="text-xl font-semibold text-white mb-4">Live Global Event Feed</h3>
+          <div id="global-event-feed" class="space-y-3 h-96 overflow-y-auto pr-2">
+          </div>
         </div>
       </main>
 
       <footer class="border-t border-gray-800/50 mt-12">
-        <div
-          class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm"
-        >
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
           &copy; 2025 Aegis AI. All Rights Reserved.
         </div>
       </footer>
@@ -205,14 +218,93 @@
         const mobileMenu = document.getElementById("mobile-menu");
         const toggles = document.querySelectorAll(".toggle-checkbox");
         
-        // Summary elements
         const totalEventsEl = document.getElementById("summary-total-events");
         const eventsTodayEl = document.getElementById("summary-events-today");
         const lastEventEl = document.getElementById("summary-last-event");
         const eventFeedContainer = document.getElementById("global-event-feed");
+        const refreshButton = document.getElementById("refresh-button");
+        
+        // NEW: Gemini Briefing Elements
+        const generateBriefingBtn = document.getElementById("generate-briefing-btn");
+        const briefingContainer = document.getElementById("briefing-container");
+        const briefingResultContainer = document.getElementById("briefing-result-container");
+
 
         let systemState = { surveillance: false, monitor: false };
         let summaryPoll, eventsPoll;
+
+        // --- Gemini API Function ---
+        const generateSecurityBriefing = async () => {
+            briefingContainer.classList.add('hidden');
+            briefingResultContainer.classList.remove('hidden');
+            briefingResultContainer.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <div class="spinner h-5 w-5 rounded-full border-4 border-t-indigo-500 border-gray-600"></div>
+                    <p class="text-gray-400">Analyzing events and generating your report...</p>
+                </div>`;
+
+            try {
+                // 1. Fetch all events from the last 24 hours
+                const response = await fetch("/api/events");
+                const data = await response.json();
+                
+                if (!data.success || data.events.length === 0) {
+                    briefingResultContainer.innerHTML = `<p class="text-amber-400">No events found in the last 24 hours to generate a briefing.</p>`;
+                    setTimeout(() => {
+                       briefingContainer.classList.remove('hidden');
+                       briefingResultContainer.classList.add('hidden');
+                    }, 4000);
+                    return;
+                }
+                
+                // 2. Format events for the prompt
+                const formattedEvents = data.events.map(e => ` - Event: '${e.class_name}' from module '${e.module}' at ${new Date(e.timestamp).toLocaleTimeString()}`).join('\n');
+                
+                const userQuery = `Here is a list of security events from my home monitoring system over the last 24 hours:\n${formattedEvents}\n\nSummarize these events in a brief, easy-to-read security report. Mention the total number of events, highlight any unusual or critical incidents (like 'Falling' or 'Major Motion'), and note the busiest time of day if possible. Act as a professional security analyst.`;
+
+                const systemPrompt = "You are a helpful security analyst AI for the Aegis Home Security system. Your goal is to provide clear, concise, and useful summaries of security events to the homeowner. Use markdown for formatting like lists or bold text.";
+
+                // 3. Call the Gemini API
+                const apiKey = ""; // Leave blank, will be handled by the environment
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                };
+                
+                const apiResponse = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!apiResponse.ok) {
+                    throw new Error(`API Error: ${apiResponse.statusText}`);
+                }
+
+                const result = await apiResponse.json();
+                const briefingText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (briefingText) {
+                    // Simple markdown to HTML conversion
+                    let htmlText = briefingText
+                        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-indigo-400">$1</strong>') // Bold
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italics
+                        .replace(/^- (.*$)/gm, '<li class="list-disc ml-4">$1</li>'); // List items
+                    briefingResultContainer.innerHTML = `<div class="prose prose-invert text-gray-300">${htmlText}</div>`;
+                } else {
+                    throw new Error("No content received from AI.");
+                }
+
+            } catch (error) {
+                console.error("Error generating briefing:", error);
+                briefingResultContainer.innerHTML = `<p class="text-red-400">Failed to generate briefing. Please check the console for details.</p>`;
+            }
+        };
+
 
         const fetchSystemState = async () => {
           try {
@@ -250,12 +342,15 @@
                 }
             } catch(error) {
                 console.error("Error fetching summary:", error);
+                totalEventsEl.textContent = 'Err';
+                eventsTodayEl.textContent = 'Err';
+                lastEventEl.textContent = 'Error';
             }
         };
         
         const fetchAllEvents = async () => {
             try {
-                const response = await fetch("/api/events/all");
+                const response = await fetch("/api/events");
                 const data = await response.json();
                 if(data.success) {
                     updateEventFeed(data.events);
@@ -268,8 +363,7 @@
         const updateDashboardUI = () => {
           toggles.forEach(toggle => {
             const system = toggle.dataset.system;
-            const card = toggle.closest('.card');
-            const statusText = card.querySelector('.status-text');
+            const statusText = document.querySelector(`.status-text[data-system="${system}"]`);
             
             toggle.checked = systemState[system];
 
@@ -287,50 +381,66 @@
 
         const updateEventFeed = (events) => {
             if (events.length === 0) {
-                eventFeedContainer.innerHTML = `<p class="text-gray-500 text-center">No events recorded yet.</p>`;
+                eventFeedContainer.innerHTML = `<p class="text-gray-500 text-center py-8">No events recorded yet.</p>`;
                 return;
             }
-            // Display latest events first
-            eventFeedContainer.innerHTML = events.slice().reverse().map(event => {
-                const time = new Date(event.timestamp * 1000).toLocaleString();
+            eventFeedContainer.innerHTML = events.map(event => {
+                const time = new Date(event.timestamp).toLocaleString();
                 const moduleName = event.module.charAt(0).toUpperCase() + event.module.slice(1);
                 
+                const isSurveillance = event.module === 'surveillance';
+                const borderColor = isSurveillance ? 'border-amber-500' : 'border-indigo-500';
+                const iconColor = isSurveillance ? 'text-amber-400' : 'text-indigo-400';
+                const icon = isSurveillance ? 
+                    `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${iconColor}"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>` : 
+                    `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${iconColor}"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>`;
+
                 return `
-                    <div class="flex items-center space-x-4 p-2 bg-gray-800/30 rounded-lg">
-                        <div class="flex-grow">
-                            <div class="flex items-center justify-between">
-                                <p class="text-white font-medium">${moduleName}: <strong>${event.class_name}</strong> detected</p>
-                                <span class="text-xs text-gray-400">${time}</span>
-                            </div>
-                        </div>
-                    </div>`;
+                <div class="flex items-start space-x-4 p-3 bg-gray-800/30 rounded-lg border-l-4 ${borderColor}">
+                    <div>${icon}</div>
+                    <div class="flex-grow">
+                        <p class="text-white font-medium"><strong>${moduleName}:</strong> ${event.class_name}</p>
+                        <p class="text-xs text-gray-400 font-mono">${time}</p>
+                    </div>
+                </div>`;
             }).join("");
         };
         
-        // Event Listeners
         mobileMenuButton.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
 
         toggles.forEach(toggle => {
-            // Assign unique IDs to labels to make them clickable
             const system = toggle.dataset.system;
             toggle.id = `toggle-${system}`;
-            toggle.nextElementSibling.setAttribute('for', `toggle-${system}`);
+            const label = toggle.nextElementSibling;
+            if (label) {
+                label.setAttribute('for', `toggle-${system}`);
+            }
 
             toggle.addEventListener("change", async (e) => {
-                const isActive = e.target.checked;
-                systemState[system] = isActive;
-                await setModuleState(system, isActive);
-                updateDashboardUI();
+              const isActive = e.target.checked;
+              systemState[system] = isActive;
+              await setModuleState(system, isActive);
+              updateDashboardUI();
             });
+            toggle.parentElement.addEventListener('click', (e) => e.preventDefault());
         });
+        
+        refreshButton.addEventListener('click', () => {
+            fetchSummary();
+            fetchAllEvents();
+            refreshButton.querySelector('svg').classList.add('animate-spin');
+            setTimeout(() => refreshButton.querySelector('svg').classList.remove('animate-spin'), 1000);
+        });
+        
+        // NEW: Event Listener for Briefing Button
+        generateBriefingBtn.addEventListener('click', generateSecurityBriefing);
 
-        // Initial Load and Polling
         const startPolling = () => {
             fetchSystemState();
             fetchSummary();
             fetchAllEvents();
-            summaryPoll = setInterval(fetchSummary, 5000); // every 5 seconds
-            eventsPoll = setInterval(fetchAllEvents, 3000); // every 3 seconds
+            summaryPoll = setInterval(fetchSummary, 5000);
+            eventsPoll = setInterval(fetchAllEvents, 3000);
         };
 
         startPolling();
