@@ -115,7 +115,7 @@ class EventLogger:
         event_data = {
             "timestamp": datetime.now().isoformat(),
             "event_type": "fire_detection",
-            "confidence": confidence,
+            "confidence": float(confidence),  # Convert to native Python float for JSON serialization
             "file_location": file_location or ""
         }
         
@@ -133,7 +133,7 @@ class EventLogger:
         event_data = {
             "timestamp": datetime.now().isoformat(),
             "event_type": "smoke_detection",
-            "confidence": confidence,
+            "confidence": float(confidence),  # Convert to native Python float for JSON serialization
             "file_location": file_location or ""
         }
         
@@ -168,9 +168,9 @@ class EventLogger:
         event_data = {
             "timestamp": datetime.now().isoformat(),
             "event_type": "fall_detection",
-            "confidence": confidence,
+            "confidence": float(confidence),  # Convert to native Python float for JSON serialization
             "file_location": file_location or "",
-            "frame_count": frame_count
+            "frame_count": int(frame_count)  # Convert to native Python int for JSON serialization
         }
         
         self._log_event("fall", event_data)

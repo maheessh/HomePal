@@ -18,8 +18,6 @@ class DetectionConfig:
     motion_cooldown: float
     fire_enabled: bool
     fire_confidence_threshold: float
-    smoke_enabled: bool
-    smoke_confidence_threshold: float
 
 
 @dataclass
@@ -133,21 +131,6 @@ class ConfigLoader:
                 print("❌ Fire 'confidence_threshold' must be between 0 and 1")
                 return False
             
-            # Validate smoke settings
-            if 'smoke' not in detection:
-                print("❌ Missing 'smoke' section in detection configuration")
-                return False
-                
-            smoke = detection['smoke']
-            if not isinstance(smoke.get('enabled'), bool):
-                print("❌ Smoke 'enabled' must be a boolean")
-                return False
-            if not isinstance(smoke.get('confidence_threshold'), (int, float)):
-                print("❌ Smoke 'confidence_threshold' must be a number")
-                return False
-            if not 0 <= smoke.get('confidence_threshold', 0) <= 1:
-                print("❌ Smoke 'confidence_threshold' must be between 0 and 1")
-                return False
             
             # Validate camera settings
             if 'camera' not in self.config_data:
@@ -240,16 +223,13 @@ class ConfigLoader:
         detection = self.config_data['detection']
         motion = detection['motion']
         fire = detection['fire']
-        smoke = detection['smoke']
         
         return DetectionConfig(
             motion_enabled=motion['enabled'],
             motion_area_threshold=motion['area_threshold'],
             motion_cooldown=motion['cooldown'],
             fire_enabled=fire['enabled'],
-            fire_confidence_threshold=fire['confidence_threshold'],
-            smoke_enabled=smoke['enabled'],
-            smoke_confidence_threshold=smoke['confidence_threshold']
+            fire_confidence_threshold=fire['confidence_threshold']
         )
     
     def get_camera_config(self) -> CameraConfig:
@@ -307,7 +287,6 @@ class ConfigLoader:
         detection = self.config_data['detection']
         print(f"🔍 Motion Detection: {'✅ Enabled' if detection['motion']['enabled'] else '❌ Disabled'}")
         print(f"🔥 Fire Detection: {'✅ Enabled' if detection['fire']['enabled'] else '❌ Disabled'}")
-        print(f"💨 Smoke Detection: {'✅ Enabled' if detection['smoke']['enabled'] else '❌ Disabled'}")
         
         camera = self.config_data['camera']
         print(f"📹 Camera Index: {camera['index']}")

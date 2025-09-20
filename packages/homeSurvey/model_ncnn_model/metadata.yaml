@@ -12,7 +12,6 @@ imgsz:
 - 320
 names:
   0: Fire
-  1: Smoke
 args:
   batch: 1
   half: true

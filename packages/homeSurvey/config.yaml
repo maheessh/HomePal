@@ -17,11 +17,6 @@ detection:
     # Minimum confidence threshold for fire detection (0.0 to 1.0)
     confidence_threshold: 0.50
   
-  # Enable or disable smoke detection  
-  smoke:
-    enabled: true
-    # Minimum confidence threshold for smoke detection (0.0 to 1.0)
-    confidence_threshold: 0.50
 
 # Camera Settings
 camera:

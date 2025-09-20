@@ -48,7 +48,7 @@ logging_config = config_loader.get_logging_config()
 NCNN_MODEL_PATH = model_config.path
 CAMERA_INDEX = camera_config.index
 IMG_SIZE = camera_config.image_size
-CONF_THRESH = min(detection_config.fire_confidence_threshold, detection_config.smoke_confidence_threshold)  # Use the more restrictive threshold
+CONF_THRESH = detection_config.fire_confidence_threshold
 MOTION_AREA_THRESH = detection_config.motion_area_threshold
 DETECTION_COOLDOWN = detection_config.motion_cooldown
 USE_HALF = False                         # NCNN inference may not support float16; follow your export
@@ -61,7 +61,7 @@ FPS = recording_config.fps
 SAVED_FOLDER = os.path.join(os.path.dirname(__file__), '..', '..', recording_config.save_folder.replace('../../', ''))
 
 # mapping from model class ids -> names
-CLASS_NAMES = {0: "Fire", 1: "Smoke"}
+CLASS_NAMES = {0: "Fire"}
 
 # Initialize event logger
 event_logger = get_logger()
@@ -78,44 +78,54 @@ class VideoRecorder:
         self.video_writer = None
         self.frame_buffer = deque(maxlen=int(fps * duration))
         self.recording_thread = None
+        self.recording_lock = threading.Lock()
         
         # Ensure saved folder exists
         os.makedirs(saved_folder, exist_ok=True)
     
     def start_recording(self, frame):
         """Start recording a video from the current frame"""
-        if self.is_recording:
-            return None  # Already recording
-        
-        self.is_recording = True
-        self.frame_buffer.clear()
-        
-        # Get frame dimensions
-        height, width = frame.shape[:2]
-        
-        # Generate filename with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"motion_video_{timestamp}.mp4"
-        filepath = os.path.join(self.saved_folder, filename)
-        
-        # Initialize video writer
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        self.video_writer = cv2.VideoWriter(filepath, fourcc, self.fps, (width, height))
-        
-        # Add current frame to buffer
-        self.frame_buffer.append(frame.copy())
-        
-        # Start recording thread
-        self.recording_thread = threading.Thread(target=self._record_frames, daemon=True)
-        self.recording_thread.start()
-        
-        print(f"🎥 Started recording: {filename}")
-        return filepath
+        with self.recording_lock:
+            if self.is_recording:
+                return None  # Already recording
+            
+            self.is_recording = True
+            self.frame_buffer.clear()
+            
+            # Get frame dimensions
+            height, width = frame.shape[:2]
+            
+            # Generate filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"motion_video_{timestamp}.mp4"
+            filepath = os.path.join(self.saved_folder, filename)
+            
+            # Initialize video writer
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            self.video_writer = cv2.VideoWriter(filepath, fourcc, self.fps, (width, height))
+            
+            # Verify video writer was created successfully
+            if not self.video_writer.isOpened():
+                print(f"❌ Failed to initialize video writer for {filename}")
+                self.video_writer = None
+                self.is_recording = False
+                return None
+            
+            # Add current frame to buffer
+            self.frame_buffer.append(frame.copy())
+            
+            # Start recording thread
+            self.recording_thread = threading.Thread(target=self._record_frames, daemon=True)
+            self.recording_thread.start()
+            
+            print(f"🎥 Started recording: {filename}")
+            return filepath
     
     def add_frame(self, frame):
         """Add a frame to the current recording"""
-        if self.is_recording:
-            self.frame_buffer.append(frame.copy())
+        with self.recording_lock:
+            if self.is_recording:
+                self.frame_buffer.append(frame.copy())
     
     def _record_frames(self):
         """Record frames in a separate thread"""
@@ -123,33 +133,44 @@ class VideoRecorder:
         
         while self.is_recording and (time.time() - start_time) < self.duration:
             if self.frame_buffer:
-                frame = self.frame_buffer.popleft()
-                self.video_writer.write(frame)
+                with self.recording_lock:
+                    if self.video_writer is not None and self.is_recording:
+                        frame = self.frame_buffer.popleft()
+                        try:
+                            self.video_writer.write(frame)
+                        except Exception as e:
+                            print(f"❌ Error writing frame to video: {e}")
+                            break
             time.sleep(1.0 / self.fps)
         
         self.stop_recording()
     
     def stop_recording(self):
         """Stop recording and save the video"""
-        if not self.is_recording:
-            return
-        
-        self.is_recording = False
-        
-        # Write remaining frames
-        while self.frame_buffer:
-            frame = self.frame_buffer.popleft()
-            self.video_writer.write(frame)
-        
-        if self.video_writer:
-            self.video_writer.release()
-            self.video_writer = None
-        
-        print("🎥 Video recording completed")
+        with self.recording_lock:
+            if not self.is_recording:
+                return
+            
+            self.is_recording = False
+            
+            # Write remaining frames
+            if self.video_writer is not None:
+                while self.frame_buffer:
+                    frame = self.frame_buffer.popleft()
+                    try:
+                        self.video_writer.write(frame)
+                    except Exception as e:
+                        print(f"❌ Error writing final frame to video: {e}")
+                        break
+                
+                self.video_writer.release()
+                self.video_writer = None
+            
+            print("🎥 Video recording completed")
 
 
 class ImageSaver:
-    """Handles saving images with bounding boxes for fire/smoke detections"""
+    """Handles saving images with bounding boxes for fire detections"""
     
     def __init__(self, saved_folder="saved"):
         self.saved_folder = saved_folder
@@ -293,14 +314,13 @@ try:
             if logging_config.enabled:
                 event_logger.log_motion_detection(video_file_path)
 
-            # Only run fire/smoke detection if at least one is enabled
-            if detection_config.fire_enabled or detection_config.smoke_enabled:
+            # Only run fire detection if enabled
+            if detection_config.fire_enabled:
                 # Use the 320x320 smframe for YOLO detection
                 smframe = camera_server.get_smframe()
                 if smframe is not None:
-                    # Use the most restrictive confidence threshold
-                    min_conf = min(detection_config.fire_confidence_threshold, detection_config.smoke_confidence_threshold)
-                    results = model(smframe, imgsz=IMG_SIZE, conf=min_conf, verbose=False)
+                    # Use fire confidence threshold
+                    results = model(smframe, imgsz=IMG_SIZE, conf=detection_config.fire_confidence_threshold, verbose=False)
                 else:
                     print("Warning: No smframe available for detection")
                     continue
@@ -319,14 +339,8 @@ try:
 
                             class_name = CLASS_NAMES.get(cls_id, f"class_{cls_id}")
                             
-                            # Check if this detection type is enabled and meets confidence threshold
-                            should_process = False
-                            if class_name == "Fire" and detection_config.fire_enabled and conf >= detection_config.fire_confidence_threshold:
-                                should_process = True
-                            elif class_name == "Smoke" and detection_config.smoke_enabled and conf >= detection_config.smoke_confidence_threshold:
-                                should_process = True
-                            
-                            if not should_process:
+                            # Check if fire detection is enabled and meets confidence threshold
+                            if class_name != "Fire" or not detection_config.fire_enabled or conf < detection_config.fire_confidence_threshold:
                                 continue
                             
                             # Scale coordinates from 320x320 back to original frame size
@@ -355,11 +369,11 @@ try:
                                     cv2.putText(frame, class_name, (x1, y1 - 10),
                                                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                         
-                        # Save image with bounding boxes if there are fire or smoke detections
+                        # Save image with bounding boxes if there are fire detections
                         if detections and image_saver:
                             image_file_path = image_saver.save_detection_image(frame, detections, CLASS_NAMES)
                             
-                            # Log individual detections with file location
+                            # Log fire detections with file location
                             if logging_config.enabled:
                                 for detection in detections:
                                     class_name = detection['class_name']
@@ -367,8 +381,6 @@ try:
                                     
                                     if class_name == "Fire":
                                         event_logger.log_fire_detection(confidence, image_file_path)
-                                    elif class_name == "Smoke":
-                                        event_logger.log_smoke_detection(confidence, image_file_path)
 
         if DISPLAY:
             cv2.imshow("feed", frame)
