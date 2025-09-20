@@ -4,6 +4,7 @@ motion_triggered_ncnn_yolo.py
 - OpenCV capture + frame-diff motion detection
 - Run Ultralytics YOLO on motion frames (NCNN-exported model)
 - Print simplified detections to terminal
+- Configuration-driven detection settings
 """
 
 import time
@@ -24,22 +25,40 @@ from camserve import SimpleCameraServer
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'services'))
 from event_logger import get_logger
 
-# --- Configuration ---
-# Update this path to the correct absolute or relative path of your NCNN model directory.
-NCNN_MODEL_PATH = "model_ncnn_model"
-CAMERA_INDEX = 0                         # or path to RTSP/HTTP stream
-IMG_SIZE = 320                           # model expects 320x320 per metadata
-CONF_THRESH = 0.50                       # min confidence to consider detection
-MOTION_AREA_THRESH = 50                  # min contour area to count as motion (tuned for sensitivity)
-DETECTION_COOLDOWN = 1.0                 # seconds between running detector when motion persists
+# Add the config loader module
+from config_loader import load_surveillance_config
+
+# --- Load Configuration ---
+print("🔧 Loading surveillance configuration...")
+config_loader = load_surveillance_config("config.yaml")
+
+if not config_loader:
+    print("❌ Failed to load configuration. Exiting...")
+    sys.exit(1)
+
+# Get configuration objects
+detection_config = config_loader.get_detection_config()
+camera_config = config_loader.get_camera_config()
+model_config = config_loader.get_model_config()
+recording_config = config_loader.get_recording_config()
+display_config = config_loader.get_display_config()
+logging_config = config_loader.get_logging_config()
+
+# --- Configuration Variables (from config file) ---
+NCNN_MODEL_PATH = model_config.path
+CAMERA_INDEX = camera_config.index
+IMG_SIZE = camera_config.image_size
+CONF_THRESH = min(detection_config.fire_confidence_threshold, detection_config.smoke_confidence_threshold)  # Use the more restrictive threshold
+MOTION_AREA_THRESH = detection_config.motion_area_threshold
+DETECTION_COOLDOWN = detection_config.motion_cooldown
 USE_HALF = False                         # NCNN inference may not support float16; follow your export
-MAX_DETECTIONS_PER_FRAME = 10
-DISPLAY = True                           # set True for an OpenCV display window
+MAX_DETECTIONS_PER_FRAME = model_config.max_detections_per_frame
+DISPLAY = display_config.enabled
 
 # Video recording configuration
-VIDEO_DURATION = 10.0                    # seconds to record when motion is detected
-FPS = 30                                 # frames per second for video recording
-SAVED_FOLDER = os.path.join(os.path.dirname(__file__), '..', '..', 'saved')  # folder to save videos and images
+VIDEO_DURATION = recording_config.duration
+FPS = recording_config.fps
+SAVED_FOLDER = os.path.join(os.path.dirname(__file__), '..', '..', recording_config.save_folder.replace('../../', ''))
 
 # mapping from model class ids -> names
 CLASS_NAMES = {0: "Fire", 1: "Smoke"}
@@ -178,9 +197,16 @@ class ImageSaver:
         return filepath
 
 
-# Initialize video recorder and image saver
-video_recorder = VideoRecorder(fps=FPS, duration=VIDEO_DURATION, saved_folder=SAVED_FOLDER)
-image_saver = ImageSaver(saved_folder=SAVED_FOLDER)
+# Initialize video recorder and image saver (only if recording is enabled)
+video_recorder = None
+image_saver = None
+
+if recording_config.enabled:
+    video_recorder = VideoRecorder(fps=FPS, duration=VIDEO_DURATION, saved_folder=SAVED_FOLDER)
+    image_saver = ImageSaver(saved_folder=SAVED_FOLDER)
+    print("✅ Video recording enabled")
+else:
+    print("⚠️ Video recording disabled in configuration")
 
 # --- Load model ---
 try:
@@ -220,33 +246,35 @@ try:
             continue
 
         # --- Motion detection (frame differencing with running average) ---
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (21, 21), 0)
-        cv2.accumulateWeighted(gray, background, 0.5)
-        background_uint8 = cv2.convertScaleAbs(background)
-        diff = cv2.absdiff(gray, background_uint8)
-        _, thresh = cv2.threshold(diff, 50, 255, cv2.THRESH_BINARY)
-        thresh = cv2.dilate(thresh, None, iterations=2)
-        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
         motion_found = False
         motion_area_total = 0
-        for c in contours:
-            area = cv2.contourArea(c)
-            motion_area_total += area
-            if area >= MOTION_AREA_THRESH:
-                motion_found = True
-                if DISPLAY:
-                    (x, y, w, h) = cv2.boundingRect(c)
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                    cv2.putText(frame, "Motion", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
         
-        # Draw total motion area on display
-        if DISPLAY:
-            cv2.putText(frame, f"Total Motion Area: {int(motion_area_total)}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        if detection_config.motion_enabled:
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray = cv2.GaussianBlur(gray, (21, 21), 0)
+            cv2.accumulateWeighted(gray, background, 0.5)
+            background_uint8 = cv2.convertScaleAbs(background)
+            diff = cv2.absdiff(gray, background_uint8)
+            _, thresh = cv2.threshold(diff, 50, 255, cv2.THRESH_BINARY)
+            thresh = cv2.dilate(thresh, None, iterations=2)
+            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            for c in contours:
+                area = cv2.contourArea(c)
+                motion_area_total += area
+                if area >= MOTION_AREA_THRESH:
+                    motion_found = True
+                    if DISPLAY and display_config.show_motion_boxes:
+                        (x, y, w, h) = cv2.boundingRect(c)
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                        cv2.putText(frame, "Motion", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+            
+            # Draw total motion area on display
+            if DISPLAY:
+                cv2.putText(frame, f"Motion Area: {int(motion_area_total)}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
         # Add frame to video recording if currently recording
-        if video_recorder.is_recording:
+        if video_recorder and video_recorder.is_recording:
             video_recorder.add_frame(frame)
 
         now = time.time()
@@ -255,73 +283,92 @@ try:
             
             # Start video recording if not already recording
             video_file_path = None
-            if not video_recorder.is_recording:
+            if video_recorder and not video_recorder.is_recording:
                 video_file_path = video_recorder.start_recording(frame)
-            else:
+            elif video_recorder:
                 # Add frame to current recording
                 video_recorder.add_frame(frame)
             
             # Log motion detection event with file location
-            event_logger.log_motion_detection(video_file_path)
+            if logging_config.enabled:
+                event_logger.log_motion_detection(video_file_path)
 
-            # Use the 320x320 smframe for YOLO detection
-            smframe = camera_server.get_smframe()
-            if smframe is not None:
-                results = model(smframe, imgsz=IMG_SIZE, conf=CONF_THRESH, verbose=False)
-            else:
-                print("Warning: No smframe available for detection")
-                continue
+            # Only run fire/smoke detection if at least one is enabled
+            if detection_config.fire_enabled or detection_config.smoke_enabled:
+                # Use the 320x320 smframe for YOLO detection
+                smframe = camera_server.get_smframe()
+                if smframe is not None:
+                    # Use the most restrictive confidence threshold
+                    min_conf = min(detection_config.fire_confidence_threshold, detection_config.smoke_confidence_threshold)
+                    results = model(smframe, imgsz=IMG_SIZE, conf=min_conf, verbose=False)
+                else:
+                    print("Warning: No smframe available for detection")
+                    continue
 
-            if len(results) > 0:
-                r = results[0]
-                boxes = getattr(r, "boxes", None)
-                if boxes is not None and len(boxes) > 0:
-                    # Collect all detections for image saving
-                    detections = []
-                    
-                    for i in range(min(len(boxes), MAX_DETECTIONS_PER_FRAME)):
-                        xyxy = boxes.xyxy[i].cpu().numpy()
-                        cls_id = int(boxes.cls[i].cpu().numpy())
-                        conf = float(boxes.conf[i].cpu().numpy())
+                if len(results) > 0:
+                    r = results[0]
+                    boxes = getattr(r, "boxes", None)
+                    if boxes is not None and len(boxes) > 0:
+                        # Collect all detections for image saving
+                        detections = []
+                        
+                        for i in range(min(len(boxes), MAX_DETECTIONS_PER_FRAME)):
+                            xyxy = boxes.xyxy[i].cpu().numpy()
+                            cls_id = int(boxes.cls[i].cpu().numpy())
+                            conf = float(boxes.conf[i].cpu().numpy())
 
-                        class_name = CLASS_NAMES.get(cls_id, f"class_{cls_id}")
-                        
-                        # Scale coordinates from 320x320 back to original frame size
-                        frame_h, frame_w = frame.shape[:2]
-                        scale_x = frame_w / 320.0
-                        scale_y = frame_h / 320.0
-                        
-                        x1 = int(xyxy[0] * scale_x)
-                        y1 = int(xyxy[1] * scale_y)
-                        x2 = int(xyxy[2] * scale_x)
-                        y2 = int(xyxy[3] * scale_y)
-                        
-                        
-                        # Add to detections list for image saving
-                        detections.append({
-                            'coordinates': (x1, y1, x2, y2),
-                            'class_name': class_name,
-                            'confidence': conf
-                        })
-
-                        if DISPLAY:
-                            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                            cv2.putText(frame, f"{class_name} {conf:.2f}", (x1, y1 - 10),
-                                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                    
-                    # Save image with bounding boxes if there are fire or smoke detections
-                    if detections:
-                        image_file_path = image_saver.save_detection_image(frame, detections, CLASS_NAMES)
-                        
-                        # Log individual detections with file location
-                        for detection in detections:
-                            class_name = detection['class_name']
-                            confidence = detection['confidence']
+                            class_name = CLASS_NAMES.get(cls_id, f"class_{cls_id}")
                             
-                            if class_name == "Fire":
-                                event_logger.log_fire_detection(confidence, image_file_path)
-                            elif class_name == "Smoke":
-                                event_logger.log_smoke_detection(confidence, image_file_path)
+                            # Check if this detection type is enabled and meets confidence threshold
+                            should_process = False
+                            if class_name == "Fire" and detection_config.fire_enabled and conf >= detection_config.fire_confidence_threshold:
+                                should_process = True
+                            elif class_name == "Smoke" and detection_config.smoke_enabled and conf >= detection_config.smoke_confidence_threshold:
+                                should_process = True
+                            
+                            if not should_process:
+                                continue
+                            
+                            # Scale coordinates from 320x320 back to original frame size
+                            frame_h, frame_w = frame.shape[:2]
+                            scale_x = frame_w / 320.0
+                            scale_y = frame_h / 320.0
+                            
+                            x1 = int(xyxy[0] * scale_x)
+                            y1 = int(xyxy[1] * scale_y)
+                            x2 = int(xyxy[2] * scale_x)
+                            y2 = int(xyxy[3] * scale_y)
+                            
+                            # Add to detections list for image saving
+                            detections.append({
+                                'coordinates': (x1, y1, x2, y2),
+                                'class_name': class_name,
+                                'confidence': conf
+                            })
+
+                            if DISPLAY:
+                                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                                if display_config.show_confidence:
+                                    cv2.putText(frame, f"{class_name} {conf:.2f}", (x1, y1 - 10),
+                                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                                else:
+                                    cv2.putText(frame, class_name, (x1, y1 - 10),
+                                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                        
+                        # Save image with bounding boxes if there are fire or smoke detections
+                        if detections and image_saver:
+                            image_file_path = image_saver.save_detection_image(frame, detections, CLASS_NAMES)
+                            
+                            # Log individual detections with file location
+                            if logging_config.enabled:
+                                for detection in detections:
+                                    class_name = detection['class_name']
+                                    confidence = detection['confidence']
+                                    
+                                    if class_name == "Fire":
+                                        event_logger.log_fire_detection(confidence, image_file_path)
+                                    elif class_name == "Smoke":
+                                        event_logger.log_smoke_detection(confidence, image_file_path)
 
         if DISPLAY:
             cv2.imshow("feed", frame)
@@ -336,7 +383,7 @@ except KeyboardInterrupt:
 
 finally:
     # Stop video recording if active
-    if video_recorder.is_recording:
+    if video_recorder and video_recorder.is_recording:
         video_recorder.stop_recording()
     
     camera_server.stop()

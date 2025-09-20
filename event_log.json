@@ -1631,6 +1631,238 @@
       "timestamp": "2025-09-20T02:15:02.709266",
       "event_type": "motion_detection",
       "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\motion_video_20250920_021502.mp4"
+    },
+    {
+      "timestamp": "2025-09-20T02:58:22.602040",
+      "event_type": "motion_detection",
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\motion_video_20250920_025822.mp4"
+    },
+    {
+      "timestamp": "2025-09-20T02:58:23.444486",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:58:25.676573",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:58:25.781096",
+      "event_type": "smoke_detection",
+      "confidence": 0.5181964039802551,
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\detection_20250920_025825.jpg"
+    },
+    {
+      "timestamp": "2025-09-20T02:58:26.693234",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:58:26.764779",
+      "event_type": "smoke_detection",
+      "confidence": 0.5890757441520691,
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\detection_20250920_025826.jpg"
+    },
+    {
+      "timestamp": "2025-09-20T02:58:30.363969",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:58:30.489463",
+      "event_type": "smoke_detection",
+      "confidence": 0.5847947001457214,
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\detection_20250920_025830.jpg"
+    },
+    {
+      "timestamp": "2025-09-20T02:58:31.369990",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:58:31.439968",
+      "event_type": "smoke_detection",
+      "confidence": 0.6237517595291138,
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\detection_20250920_025831.jpg"
+    },
+    {
+      "timestamp": "2025-09-20T02:58:46.282988",
+      "event_type": "motion_detection",
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\motion_video_20250920_025846.mp4"
+    },
+    {
+      "timestamp": "2025-09-20T02:58:48.805960",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:58:51.004824",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:58:52.007048",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:58:53.023469",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:58:54.035874",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:58:55.050376",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:58:58.391146",
+      "event_type": "motion_detection",
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\motion_video_20250920_025858.mp4"
+    },
+    {
+      "timestamp": "2025-09-20T02:59:00.126517",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:00.228048",
+      "event_type": "smoke_detection",
+      "confidence": 0.5687590837478638,
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\detection_20250920_025900.jpg"
+    },
+    {
+      "timestamp": "2025-09-20T02:59:03.376987",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:16.432565",
+      "event_type": "motion_detection",
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\motion_video_20250920_025916.mp4"
+    },
+    {
+      "timestamp": "2025-09-20T02:59:17.451369",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:17.598426",
+      "event_type": "fire_detection",
+      "confidence": 0.7369109392166138,
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\detection_20250920_025917.jpg"
+    },
+    {
+      "timestamp": "2025-09-20T02:59:18.466787",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:18.545799",
+      "event_type": "fire_detection",
+      "confidence": 0.7483187317848206,
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\detection_20250920_025918.jpg"
+    },
+    {
+      "timestamp": "2025-09-20T02:59:19.513258",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:25.909610",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:26.924124",
+      "event_type": "motion_detection",
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\motion_video_20250920_025926.mp4"
+    },
+    {
+      "timestamp": "2025-09-20T02:59:28.123620",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:28.278209",
+      "event_type": "smoke_detection",
+      "confidence": 0.6396743059158325,
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\detection_20250920_025928.jpg"
+    },
+    {
+      "timestamp": "2025-09-20T02:59:29.124782",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:29.202118",
+      "event_type": "smoke_detection",
+      "confidence": 0.7125921845436096,
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\detection_20250920_025929.jpg"
+    },
+    {
+      "timestamp": "2025-09-20T02:59:37.277891",
+      "event_type": "motion_detection",
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\motion_video_20250920_025937.mp4"
+    },
+    {
+      "timestamp": "2025-09-20T02:59:38.352420",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:38.441007",
+      "event_type": "smoke_detection",
+      "confidence": 0.6309966444969177,
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\detection_20250920_025938.jpg"
+    },
+    {
+      "timestamp": "2025-09-20T02:59:39.440527",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:39.537057",
+      "event_type": "fire_detection",
+      "confidence": 0.7792375683784485,
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\detection_20250920_025939.jpg"
+    },
+    {
+      "timestamp": "2025-09-20T02:59:40.511044",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:40.595602",
+      "event_type": "fire_detection",
+      "confidence": 0.7796486616134644,
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\detection_20250920_025940.jpg"
+    },
+    {
+      "timestamp": "2025-09-20T02:59:41.554018",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:44.315888",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:46.163393",
+      "event_type": "motion_detection",
+      "file_location": ""
+    },
+    {
+      "timestamp": "2025-09-20T02:59:48.931817",
+      "event_type": "motion_detection",
+      "file_location": "C:\\Users\\default.LAPTOP-3RO2LG6Q\\Documents\\GitHub\\HomePal\\packages\\homeSurvey\\..\\..\\saved\\motion_video_20250920_025948.mp4"
     }
   ]
 }

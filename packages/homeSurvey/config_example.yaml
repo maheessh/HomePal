@@ -1,0 +1,91 @@
+# Example Home Surveillance Configuration File
+# Copy this file to config.yaml and modify the settings as needed
+
+# Detection Settings
+detection:
+  # Enable or disable motion detection
+  motion:
+    enabled: true                    # Set to false to disable motion detection entirely
+    # Minimum contour area to count as motion (higher = less sensitive)
+    area_threshold: 50               # Try 100-200 for less sensitivity, 20-50 for more sensitivity
+    # Seconds between running detector when motion persists
+    cooldown: 1.0                    # Time to wait between detections
+  
+  # Enable or disable fire detection
+  fire:
+    enabled: true                    # Set to false to disable fire detection
+    # Minimum confidence threshold for fire detection (0.0 to 1.0)
+    confidence_threshold: 0.50       # Higher = fewer false positives, lower = more sensitive
+  
+  # Enable or disable smoke detection  
+  smoke:
+    enabled: true                    # Set to false to disable smoke detection
+    # Minimum confidence threshold for smoke detection (0.0 to 1.0)
+    confidence_threshold: 0.50       # Higher = fewer false positives, lower = more sensitive
+
+# Camera Settings
+camera:
+  # Camera index (usually 0 for default camera, or path to RTSP/HTTP stream)
+  index: 0                          # Try 1, 2, etc. if camera not found
+  # Image size for model inference (should match model training size)
+  image_size: 320                   # Usually 320 or 640
+
+# Model Settings
+model:
+  # Path to the NCNN model directory
+  path: "model_ncnn_model"
+  # Maximum number of detections per frame
+  max_detections_per_frame: 10
+
+# Recording Settings
+recording:
+  # Enable video recording when motion is detected
+  enabled: true                     # Set to false to disable video recording
+  # Duration to record when motion is detected (seconds)
+  duration: 10.0                    # How long to record each motion event
+  # Frames per second for video recording
+  fps: 30                          # Higher FPS = larger files but smoother video
+  # Folder to save videos and images
+  save_folder: "../../saved"        # Relative path to save folder
+
+# Display Settings
+display:
+  # Show OpenCV display window
+  enabled: true                     # Set to false for headless operation
+  # Show motion detection rectangles
+  show_motion_boxes: true           # Show green boxes around motion areas
+  # Show detection confidence scores
+  show_confidence: true             # Show confidence percentages on detections
+
+# Logging Settings
+logging:
+  # Enable event logging
+  enabled: true                     # Set to false to disable logging
+  # Log level (DEBUG, INFO, WARNING, ERROR)
+  level: "INFO"                     # DEBUG shows more details, ERROR shows only errors
+
+# Example Configurations:
+
+# Conservative Setup (Fewer False Positives):
+# detection:
+#   motion: { enabled: true, area_threshold: 100, cooldown: 2.0 }
+#   fire: { enabled: true, confidence_threshold: 0.70 }
+#   smoke: { enabled: true, confidence_threshold: 0.70 }
+
+# Sensitive Setup (More Detections):
+# detection:
+#   motion: { enabled: true, area_threshold: 25, cooldown: 0.5 }
+#   fire: { enabled: true, confidence_threshold: 0.30 }
+#   smoke: { enabled: true, confidence_threshold: 0.30 }
+
+# Motion Only (No Fire/Smoke Detection):
+# detection:
+#   motion: { enabled: true, area_threshold: 50, cooldown: 1.0 }
+#   fire: { enabled: false, confidence_threshold: 0.50 }
+#   smoke: { enabled: false, confidence_threshold: 0.50 }
+
+# Fire Only (No Motion/Smoke Detection):
+# detection:
+#   motion: { enabled: false, area_threshold: 50, cooldown: 1.0 }
+#   fire: { enabled: true, confidence_threshold: 0.50 }
+#   smoke: { enabled: false, confidence_threshold: 0.50 }

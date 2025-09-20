@@ -1,0 +1,65 @@
+# Home Surveillance Configuration File
+# This file allows you to configure what types of detection are enabled
+
+# Detection Settings
+detection:
+  # Enable or disable motion detection
+  motion:
+    enabled: true
+    # Minimum contour area to count as motion (higher = less sensitive)
+    area_threshold: 50
+    # Seconds between running detector when motion persists
+    cooldown: 1.0
+  
+  # Enable or disable fire detection
+  fire:
+    enabled: true
+    # Minimum confidence threshold for fire detection (0.0 to 1.0)
+    confidence_threshold: 0.50
+  
+  # Enable or disable smoke detection  
+  smoke:
+    enabled: true
+    # Minimum confidence threshold for smoke detection (0.0 to 1.0)
+    confidence_threshold: 0.50
+
+# Camera Settings
+camera:
+  # Camera index (usually 0 for default camera, or path to RTSP/HTTP stream)
+  index: 0
+  # Image size for model inference (should match model training size)
+  image_size: 320
+
+# Model Settings
+model:
+  # Path to the NCNN model directory
+  path: "model_ncnn_model"
+  # Maximum number of detections per frame
+  max_detections_per_frame: 10
+
+# Recording Settings
+recording:
+  # Enable video recording when motion is detected
+  enabled: true
+  # Duration to record when motion is detected (seconds)
+  duration: 10.0
+  # Frames per second for video recording
+  fps: 30
+  # Folder to save videos and images
+  save_folder: "../../saved"
+
+# Display Settings
+display:
+  # Show OpenCV display window
+  enabled: true
+  # Show motion detection rectangles
+  show_motion_boxes: true
+  # Show detection confidence scores
+  show_confidence: true
+
+# Logging Settings
+logging:
+  # Enable event logging
+  enabled: true
+  # Log level (DEBUG, INFO, WARNING, ERROR)
+  level: "INFO"
