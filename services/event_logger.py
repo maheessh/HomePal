@@ -57,8 +57,18 @@ class EventLogger:
                 # Read existing events
                 log_data = {"events": []}
                 if os.path.exists(self.log_file):
-                    with open(self.log_file, 'r', encoding='utf-8') as f:
-                        log_data = json.load(f)
+                    try:
+                        with open(self.log_file, 'r', encoding='utf-8') as f:
+                            content = f.read().strip()
+                            if content:
+                                log_data = json.loads(content)
+                    except (json.JSONDecodeError, ValueError) as e:
+                        print(f"Warning: Corrupted JSON file detected, creating backup and starting fresh: {e}")
+                        # Create backup of corrupted file
+                        backup_file = f"{self.log_file}.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                        if os.path.exists(self.log_file):
+                            os.rename(self.log_file, backup_file)
+                        log_data = {"events": []}
                 
                 # Ensure events key exists
                 if "events" not in log_data:
@@ -71,12 +81,28 @@ class EventLogger:
                 if len(log_data["events"]) > 1000:
                     log_data["events"] = log_data["events"][-1000:]
                 
-                # Write back to file
-                with open(self.log_file, 'w', encoding='utf-8') as f:
+                # Write to temporary file first, then rename (atomic operation)
+                temp_file = f"{self.log_file}.tmp"
+                with open(temp_file, 'w', encoding='utf-8') as f:
                     json.dump(log_data, f, indent=2, ensure_ascii=False)
+                
+                # Atomic rename
+                if os.name == 'nt':  # Windows
+                    if os.path.exists(self.log_file):
+                        os.remove(self.log_file)
+                    os.rename(temp_file, self.log_file)
+                else:  # Unix-like systems
+                    os.rename(temp_file, self.log_file)
                 
             except Exception as e:
                 print(f"Error logging {event_type} event: {e}")
+                # Clean up temp file if it exists
+                temp_file = f"{self.log_file}.tmp"
+                if os.path.exists(temp_file):
+                    try:
+                        os.remove(temp_file)
+                    except:
+                        pass
     
     def log_fire_detection(self, confidence: float, file_location: Optional[str] = None):
         """
@@ -129,6 +155,26 @@ class EventLogger:
         
         self._log_event("motion", event_data)
         print(f"[MOTION DETECTED] File: {file_location or 'N/A'}, Time: {event_data['timestamp']}")
+    
+    def log_fall_detection(self, confidence: float, file_location: Optional[str] = None, frame_count: int = 0):
+        """
+        Log a fall detection event.
+        
+        Args:
+            confidence: Detection confidence score (width/height ratio)
+            file_location: Path to saved annotated image file (optional)
+            frame_count: Frame number where fall was detected
+        """
+        event_data = {
+            "timestamp": datetime.now().isoformat(),
+            "event_type": "fall_detection",
+            "confidence": confidence,
+            "file_location": file_location or "",
+            "frame_count": frame_count
+        }
+        
+        self._log_event("fall", event_data)
+        print(f"[FALL DETECTED] Confidence: {confidence:.2f}, Frame: {frame_count}, File: {file_location or 'N/A'}, Time: {event_data['timestamp']}")
     
     def get_recent_events(self, event_type: str = "all", limit: int = 10) -> list:
         """
