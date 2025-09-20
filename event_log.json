@@ -1,0 +1,789 @@
+{
+  "events": [
+    {
+      "timestamp": "2025-09-20T01:53:04.309682",
+      "event_type": "fire_detection",
+      "confidence": 0.92,
+      "coordinates": {
+        "x1": 120,
+        "y1": 160,
+        "x2": 220,
+        "y2": 260
+      },
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "model_size": 320
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:53:04.310686",
+      "event_type": "smoke_detection",
+      "confidence": 0.78,
+      "coordinates": {
+        "x1": 60,
+        "y1": 90,
+        "x2": 190,
+        "y2": 210
+      },
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "model_size": 320
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:53:04.321685",
+      "event_type": "motion_detection",
+      "motion_area": 1450,
+      "coordinates": {
+        "x1": 0,
+        "y1": 0,
+        "x2": 320,
+        "y2": 240
+      },
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 1450
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:55:33.247191",
+      "event_type": "fire_detection",
+      "confidence": 0.95,
+      "coordinates": {
+        "x1": 100,
+        "y1": 100,
+        "x2": 200,
+        "y2": 200
+      },
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "model_size": 320
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:10.499975",
+      "event_type": "motion_detection",
+      "motion_area": 1354.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 1354.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:11.570189",
+      "event_type": "motion_detection",
+      "motion_area": 80.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 80.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:12.618882",
+      "event_type": "motion_detection",
+      "motion_area": 114.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 114.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:15.194778",
+      "event_type": "motion_detection",
+      "motion_area": 9729.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 9729.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:16.213968",
+      "event_type": "motion_detection",
+      "motion_area": 562.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 562.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:17.644560",
+      "event_type": "motion_detection",
+      "motion_area": 288.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 288.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:18.691448",
+      "event_type": "motion_detection",
+      "motion_area": 12450.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 12450.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:19.704152",
+      "event_type": "motion_detection",
+      "motion_area": 1015.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 1015.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:20.720337",
+      "event_type": "motion_detection",
+      "motion_area": 8036.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 8036.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:23.217342",
+      "event_type": "motion_detection",
+      "motion_area": 836.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 836.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:24.246938",
+      "event_type": "motion_detection",
+      "motion_area": 7838.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 7838.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:25.260359",
+      "event_type": "motion_detection",
+      "motion_area": 401.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 401.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:26.953061",
+      "event_type": "motion_detection",
+      "motion_area": 268.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 268.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:28.157570",
+      "event_type": "motion_detection",
+      "motion_area": 829.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 829.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:30.904670",
+      "event_type": "motion_detection",
+      "motion_area": 53.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 53.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:31.909714",
+      "event_type": "motion_detection",
+      "motion_area": 23152.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 23152.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:32.916741",
+      "event_type": "motion_detection",
+      "motion_area": 774.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 774.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:32.981335",
+      "event_type": "fire_detection",
+      "confidence": 0.6992067098617554,
+      "coordinates": {
+        "x1": 36,
+        "y1": 138,
+        "x2": 162,
+        "y2": 279
+      },
+      "frame_info": {
+        "detection_size": [
+          320,
+          320
+        ],
+        "model_size": 320,
+        "confidence_threshold": 0.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:33.942998",
+      "event_type": "motion_detection",
+      "motion_area": 795.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 795.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:34.003994",
+      "event_type": "fire_detection",
+      "confidence": 0.8259596228599548,
+      "coordinates": {
+        "x1": 50,
+        "y1": 185,
+        "x2": 168,
+        "y2": 304
+      },
+      "frame_info": {
+        "detection_size": [
+          320,
+          320
+        ],
+        "model_size": 320,
+        "confidence_threshold": 0.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:34.964545",
+      "event_type": "motion_detection",
+      "motion_area": 3387.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 3387.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:35.032072",
+      "event_type": "fire_detection",
+      "confidence": 0.779962420463562,
+      "coordinates": {
+        "x1": 81,
+        "y1": 178,
+        "x2": 184,
+        "y2": 288
+      },
+      "frame_info": {
+        "detection_size": [
+          320,
+          320
+        ],
+        "model_size": 320,
+        "confidence_threshold": 0.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:36.054951",
+      "event_type": "motion_detection",
+      "motion_area": 2150.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 2150.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:36.116959",
+      "event_type": "fire_detection",
+      "confidence": 0.7567498087882996,
+      "coordinates": {
+        "x1": 87,
+        "y1": 186,
+        "x2": 197,
+        "y2": 300
+      },
+      "frame_info": {
+        "detection_size": [
+          320,
+          320
+        ],
+        "model_size": 320,
+        "confidence_threshold": 0.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:37.192343",
+      "event_type": "motion_detection",
+      "motion_area": 232.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 232.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:41.867794",
+      "event_type": "motion_detection",
+      "motion_area": 145.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 145.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:44.270291",
+      "event_type": "motion_detection",
+      "motion_area": 591.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 591.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:50.025238",
+      "event_type": "motion_detection",
+      "motion_area": 173.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 173.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:51.947702",
+      "event_type": "motion_detection",
+      "motion_area": 8751.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 8751.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:53.029296",
+      "event_type": "motion_detection",
+      "motion_area": 190.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 190.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:54.079820",
+      "event_type": "motion_detection",
+      "motion_area": 153.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 153.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:56.543353",
+      "event_type": "motion_detection",
+      "motion_area": 476.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 476.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:57.547759",
+      "event_type": "motion_detection",
+      "motion_area": 57.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 57.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:58.578283",
+      "event_type": "motion_detection",
+      "motion_area": 10624.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 10624.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:56:59.622258",
+      "event_type": "motion_detection",
+      "motion_area": 4308.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 4308.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:00.636766",
+      "event_type": "motion_detection",
+      "motion_area": 1374.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 1374.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:01.637002",
+      "event_type": "motion_detection",
+      "motion_area": 1257.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 1257.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:02.792894",
+      "event_type": "motion_detection",
+      "motion_area": 2784.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 2784.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:04.095397",
+      "event_type": "motion_detection",
+      "motion_area": 1327.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 1327.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:05.126470",
+      "event_type": "motion_detection",
+      "motion_area": 906.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 906.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:08.647184",
+      "event_type": "motion_detection",
+      "motion_area": 3012.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 3012.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:09.661741",
+      "event_type": "motion_detection",
+      "motion_area": 2723.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 2723.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:10.661978",
+      "event_type": "motion_detection",
+      "motion_area": 9068.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 9068.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:11.674251",
+      "event_type": "motion_detection",
+      "motion_area": 783.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 783.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:13.458296",
+      "event_type": "motion_detection",
+      "motion_area": 168.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 168.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:14.862646",
+      "event_type": "motion_detection",
+      "motion_area": 1818.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 1818.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:15.889679",
+      "event_type": "motion_detection",
+      "motion_area": 147.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 147.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:18.345540",
+      "event_type": "motion_detection",
+      "motion_area": 7850.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 7850.0
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:19.362380",
+      "event_type": "motion_detection",
+      "motion_area": 4327.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 4327.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:20.685246",
+      "event_type": "motion_detection",
+      "motion_area": 914.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 914.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:21.692751",
+      "event_type": "motion_detection",
+      "motion_area": 4647.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 4647.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:22.704915",
+      "event_type": "motion_detection",
+      "motion_area": 16402.5,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 16402.5
+      }
+    },
+    {
+      "timestamp": "2025-09-20T01:57:23.762429",
+      "event_type": "motion_detection",
+      "motion_area": 4984.0,
+      "coordinates": {},
+      "frame_info": {
+        "frame_size": [
+          480,
+          640
+        ],
+        "motion_area_total": 4984.0
+      }
+    }
+  ]
+}
