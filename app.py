@@ -3,7 +3,7 @@
 Simple Flask app that serves index.html and starts camserve
 """
 
-from flask import Flask, render_template, jsonify, request, Response
+from flask import Flask, render_template, jsonify, request, Response, redirect, url_for
 import subprocess
 import sys
 import os
@@ -16,6 +16,12 @@ app = Flask(__name__, template_folder='frontend')
 
 # Global variable to track camera server process
 camera_process = None
+
+# Global variable to track system states
+system_state = {
+    'surveillance': False,
+    'monitor': False
+}
 
 def start_camera_server():
     """Start the camera server in a separate process"""
@@ -69,8 +75,26 @@ def stop_camera_server():
 
 @app.route('/')
 def index():
+    """Redirect to dashboard page"""
+    return redirect(url_for('dashboard'))
+
+@app.route('/dashboard')
+@app.route('/dashboard.html')
+def dashboard():
     """Serve the dashboard page"""
-    return render_template('index.html')
+    return render_template('dashboard.html')
+
+@app.route('/surveillance')
+@app.route('/surveillance.html')
+def surveillance():
+    """Serve the surveillance page"""
+    return render_template('surveillance.html')
+
+@app.route('/monitor')
+@app.route('/monitor.html')
+def monitor():
+    """Serve the monitor page"""
+    return render_template('monitor.html')
 
 @app.route('/stream')
 def stream():
@@ -164,6 +188,37 @@ def camera_status():
             return jsonify({"success": False, "message": "Camera server not accessible"})
     else:
         return jsonify({"success": False, "message": "Camera server not running"})
+
+@app.route('/api/system/state')
+def get_system_state():
+    """Get current system states"""
+    global system_state
+    return jsonify({"success": True, "state": system_state})
+
+@app.route('/api/system/state', methods=['POST'])
+def set_system_state():
+    """Update system state"""
+    global system_state
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "message": "No data provided"}), 400
+        
+        system = data.get('system')
+        state = data.get('state')
+        
+        if system not in ['surveillance', 'monitor']:
+            return jsonify({"success": False, "message": "Invalid system"}), 400
+        
+        if not isinstance(state, bool):
+            return jsonify({"success": False, "message": "State must be boolean"}), 400
+        
+        system_state[system] = state
+        return jsonify({"success": True, "message": f"{system} state updated to {state}"})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error updating state: {str(e)}"}), 500
 
 @app.route('/api/events/recent')
 def recent_events():
