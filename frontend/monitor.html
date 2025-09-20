@@ -247,6 +247,254 @@
               </ul>
             </div>
           </div>
+
+          <!-- Camera Analysis Section -->
+          <div class="bg-black/20 p-6 mt-6 rounded-md">
+            <div class="flex items-center justify-between mb-6">
+              <h4 class="font-semibold text-xl text-white">
+                Last 24 Hours - Personal Activity Analysis
+              </h4>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs text-gray-400">Updated 3 min ago</span>
+                <div
+                  class="w-2 h-2 bg-purple-400 rounded-full animate-pulse"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Activity Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-2xl font-bold text-white">89%</p>
+                    <p class="text-sm text-gray-400">Time Present</p>
+                  </div>
+                  <div
+                    class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-6 w-6 text-green-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-2xl font-bold text-white">23</p>
+                    <p class="text-sm text-gray-400">Activity Episodes</p>
+                  </div>
+                  <div
+                    class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-6 w-6 text-blue-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-2xl font-bold text-white">7.2h</p>
+                    <p class="text-sm text-gray-400">Rest Time</p>
+                  </div>
+                  <div
+                    class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-6 w-6 text-purple-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Activity Timeline -->
+            <div class="mb-4">
+              <h5 class="font-medium text-lg text-white mb-3">
+                Recent Activity Detection
+              </h5>
+              <div class="space-y-3">
+                <!-- Sample activity entries -->
+                <div
+                  class="flex items-center space-x-4 p-3 bg-gray-800/30 rounded-lg border-l-4 border-green-400"
+                >
+                  <div class="flex-shrink-0">
+                    <div
+                      class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6 text-green-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="flex-grow">
+                    <div class="flex items-center justify-between">
+                      <p class="text-white font-medium">
+                        Normal movement patterns detected
+                      </p>
+                      <span class="text-xs text-gray-400">3:15 PM</span>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                      Activity level: Normal • Duration: 45 minutes
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="flex items-center space-x-4 p-3 bg-gray-800/30 rounded-lg border-l-4 border-blue-400"
+                >
+                  <div class="flex-shrink-0">
+                    <div
+                      class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6 text-blue-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="flex-grow">
+                    <div class="flex items-center justify-between">
+                      <p class="text-white font-medium">
+                        Increased activity detected
+                      </p>
+                      <span class="text-xs text-gray-400">1:22 PM</span>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                      Activity level: Elevated • Duration: 12 minutes
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="flex items-center space-x-4 p-3 bg-gray-800/30 rounded-lg border-l-4 border-purple-400"
+                >
+                  <div class="flex-shrink-0">
+                    <div
+                      class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6 text-purple-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="flex-grow">
+                    <div class="flex items-center justify-between">
+                      <p class="text-white font-medium">Rest period observed</p>
+                      <span class="text-xs text-gray-400">11:30 AM</span>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                      Activity level: Minimal • Duration: 2 hours 15 minutes
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="flex items-center space-x-4 p-3 bg-gray-800/30 rounded-lg border-l-4 border-amber-400"
+                >
+                  <div class="flex-shrink-0">
+                    <div
+                      class="w-12 h-12 bg-amber-500/20 rounded-lg flex items-center justify-center"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6 text-amber-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="flex-grow">
+                    <div class="flex items-center justify-between">
+                      <p class="text-white font-medium">
+                        Unusual activity pattern
+                      </p>
+                      <span class="text-xs text-gray-400">8:45 AM</span>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                      Activity level: Irregular • Duration: 8 minutes
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
 
