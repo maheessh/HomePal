@@ -78,68 +78,57 @@ class EventLogger:
             except Exception as e:
                 print(f"Error logging {event_type} event: {e}")
     
-    def log_fire_detection(self, confidence: float, coordinates: Optional[Dict[str, int]] = None, 
-                          frame_info: Optional[Dict[str, Any]] = None):
+    def log_fire_detection(self, confidence: float, file_location: Optional[str] = None):
         """
         Log a fire detection event.
         
         Args:
             confidence: Detection confidence score
-            coordinates: Bounding box coordinates (optional)
-            frame_info: Additional frame information (optional)
+            file_location: Path to saved image file (optional)
         """
         event_data = {
             "timestamp": datetime.now().isoformat(),
             "event_type": "fire_detection",
             "confidence": confidence,
-            "coordinates": coordinates or {},
-            "frame_info": frame_info or {}
+            "file_location": file_location or ""
         }
         
         self._log_event("fire", event_data)
-        print(f"[FIRE DETECTED] Confidence: {confidence:.2f}, Time: {event_data['timestamp']}")
+        print(f"[FIRE DETECTED] Confidence: {confidence:.2f}, File: {file_location or 'N/A'}, Time: {event_data['timestamp']}")
     
-    def log_smoke_detection(self, confidence: float, coordinates: Optional[Dict[str, int]] = None,
-                           frame_info: Optional[Dict[str, Any]] = None):
+    def log_smoke_detection(self, confidence: float, file_location: Optional[str] = None):
         """
         Log a smoke detection event.
         
         Args:
             confidence: Detection confidence score
-            coordinates: Bounding box coordinates (optional)
-            frame_info: Additional frame information (optional)
+            file_location: Path to saved image file (optional)
         """
         event_data = {
             "timestamp": datetime.now().isoformat(),
             "event_type": "smoke_detection",
             "confidence": confidence,
-            "coordinates": coordinates or {},
-            "frame_info": frame_info or {}
+            "file_location": file_location or ""
         }
         
         self._log_event("smoke", event_data)
-        print(f"[SMOKE DETECTED] Confidence: {confidence:.2f}, Time: {event_data['timestamp']}")
+        print(f"[SMOKE DETECTED] Confidence: {confidence:.2f}, File: {file_location or 'N/A'}, Time: {event_data['timestamp']}")
     
-    def log_motion_detection(self, motion_area: int, coordinates: Optional[Dict[str, int]] = None,
-                            frame_info: Optional[Dict[str, Any]] = None):
+    def log_motion_detection(self, file_location: Optional[str] = None):
         """
         Log a motion detection event.
         
         Args:
-            motion_area: Total area of motion detected
-            coordinates: Motion region coordinates (optional)
-            frame_info: Additional frame information (optional)
+            file_location: Path to saved video file (optional)
         """
         event_data = {
             "timestamp": datetime.now().isoformat(),
             "event_type": "motion_detection",
-            "motion_area": motion_area,
-            "coordinates": coordinates or {},
-            "frame_info": frame_info or {}
+            "file_location": file_location or ""
         }
         
         self._log_event("motion", event_data)
-        print(f"[MOTION DETECTED] Area: {motion_area}, Time: {event_data['timestamp']}")
+        print(f"[MOTION DETECTED] File: {file_location or 'N/A'}, Time: {event_data['timestamp']}")
     
     def get_recent_events(self, event_type: str = "all", limit: int = 10) -> list:
         """
