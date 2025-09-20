@@ -1,5 +1,13 @@
 [
     {
+        "id": "51406863-bd74-499d-8ecd-71193df4b8a4",
+        "timestamp": "2025-09-20T16:14:37.909554",
+        "module": "monitor",
+        "class_name": "Major Event: Falling, Person: Unknown, Emotion: happy",
+        "description": "Description could not be generated.",
+        "image_path": "event_2025-09-20_16-14-37.jpg"
+    },
+    {
         "id": "e7544918-dd25-4145-9c4f-abb1cdec59ee",
         "timestamp": "2025-09-20T15:29:15.134080",
         "module": "monitor",
