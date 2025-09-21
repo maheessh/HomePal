@@ -1,4 +1,27 @@
+# Core Flask dependencies
 flask==2.3.3
+flask-cors==4.0.0
+
+# Computer Vision and AI
 opencv-python==4.8.1.78
-requests==2.31.0
+ultralytics==8.0.196
+deepface==0.0.79
 numpy==1.24.3
+pillow==10.0.1
+
+# NCNN for optimized inference
+ncnn==1.0.20250916
+
+# HTTP requests and utilities
+requests==2.31.0
+
+# Environment configuration
+python-dotenv==1.0.0
+
+# Google AI (Gemini)
+google-generativeai==0.3.2
+
+# Additional dependencies for DeepFace
+tensorflow==2.13.0
+mtcnn==0.1.1
+retina-face==0.0.13

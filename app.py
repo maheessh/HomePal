@@ -290,6 +290,17 @@ def get_event_summary():
     }
     return jsonify({"success": True, "summary": summary})
 
+@app.route("/api/events/clear", methods=["POST"])
+def clear_events():
+    """Clear all events from the events file"""
+    try:
+        with events_lock:
+            with open(EVENTS_FILE, 'w') as f:
+                json.dump([], f, indent=4)
+        return jsonify({"success": True, "message": "Events cleared successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 # --- Main Entrypoint ---
 if __name__ == "__main__":
     try:

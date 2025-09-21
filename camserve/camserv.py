@@ -1,11 +1,12 @@
-# camserv.py
 #!/usr/bin/env python3
 """
-Camera Server - OPTIMIZED VERSION
-- Advanced Surveillance: YOLO-based object detection with automatic video recording.
-- Enhanced Monitor Me: More robust pose-based fall detection logic.
-- Performance Optimizations: Frame resizing, model consolidation, and skipped-frame processing.
+Camera Server - RESTRUCTURED VERSION
+Integrates with the new structured packages:
+- home_surveillance.py for fire detection and motion
+- pose_monitor.py for activity recognition
+- Uses NCNN models for better performance
 """
+
 import cv2
 import threading
 import time
@@ -14,350 +15,460 @@ import json
 import os
 import uuid
 import numpy as np
+import sys
 from flask import Flask, Response, jsonify, request
-from ultralytics import YOLO
-from deepface import DeepFace
 from collections import deque
 
-# --- OPTIMIZATION: Central Configuration ---
+# Add packages and services to path
+current_dir = os.path.dirname(__file__)
+parent_dir = os.path.dirname(current_dir)
+packages_path = os.path.join(parent_dir, 'packages')
+services_path = os.path.join(parent_dir, 'services')
+
+sys.path.append(packages_path)
+sys.path.append(services_path)
+
+# Import our new services
+sys.path.insert(0, services_path)  # Add services to beginning of path
+from detection_service import DetectionService
+from pose_service import PoseService
+
 class Config:
+    """Central configuration for the camera server"""
     # Paths and Files
     EVENTS_FILE = 'events.json'
     CAPTURES_DIR = 'captured_images'
     RECORDINGS_DIR = 'captured_videos'
-    FACES_DIR = 'faces'
     
     # Camera Settings
     CAM_WIDTH = 640
     CAM_HEIGHT = 480
+    CAM_FPS = 30
     
     # Performance Settings
-    INFERENCE_SIZE = 320  # Resize frames to this size for AI models (big speedup)
-    PROCESS_INTERVAL = 5  # Run heavy DeepFace analysis every 5 frames
+    INFERENCE_INTERVAL = 2  # Run AI inference every N frames
+    EVENT_COOLDOWN = 5  # Seconds between same type events
     
     # Model Paths
-    # NOTE: Using one model for person/object detection
-    OBJECT_DETECTION_MODEL = 'yolov8n.pt' 
-    POSE_ESTIMATION_MODEL = 'yolov8n-pose.pt'
-    
-    # Detection Settings
-    SURVEILLANCE_CLASSES = ['person', 'car'] # <-- UPDATE with 'fire', etc.
-    EVENT_COOLDOWN = 15 # Seconds
+    INFERNO_MODEL_PATH = 'packages/inferno_ncnn_model'
+    POSE_MODEL_PATH = 'packages/yolo8spose_ncnn_model'
 
-# (VideoRecorder class remains the same - no changes needed)
 class VideoRecorder:
-    """Handles video recording when a critical event is detected."""
+    """Handles video recording when critical events are detected"""
+    
     def __init__(self, fps=20.0, duration=10.0, saved_folder=Config.RECORDINGS_DIR):
         self.fps = fps
         self.duration = duration
         self.saved_folder = saved_folder
         self.is_recording = False
         self.video_writer = None
-        self.start_time = 0
-        self.recording_thread = None
-        self.recording_lock = threading.Lock()
-        os.makedirs(saved_folder, exist_ok=True)
-
+        self.recording_start_time = None
+        
+        # Ensure recordings directory exists
+        if not os.path.exists(saved_folder):
+            os.makedirs(saved_folder)
+    
     def start_recording(self, frame):
-        """Starts a new video recording in a separate thread."""
-        with self.recording_lock:
-            if self.is_recording:
-                return  # Already recording
-            self.is_recording = True
-            self.start_time = time.time()
-            
-            height, width = frame.shape[:2]
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"event_video_{timestamp}.mp4"
-            filepath = os.path.join(self.saved_folder, filename)
-            
-            self.video_writer = cv2.VideoWriter(
-                filepath, cv2.VideoWriter_fourcc(*'mp4v'), self.fps, (width, height)
-            )
-            
-            self.recording_thread = threading.Thread(target=self._record, args=(filepath,))
-            self.recording_thread.start()
-            print(f"🎥 Started recording to {filepath}")
-            return filename
-
-    def _record(self, filepath):
-        """Private method to manage the recording duration."""
-        while time.time() - self.start_time < self.duration:
-            time.sleep(0.1)
-        self.stop_recording()
-        print(f"✅ Finished recording: {filepath}")
-
+        """Start recording video from the current frame"""
+        if self.is_recording:
+            return None
+        
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        video_filename = f"event_recording_{timestamp}.mp4"
+        video_path = os.path.join(self.saved_folder, video_filename)
+        
+        # Initialize video writer
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        self.video_writer = cv2.VideoWriter(
+            video_path, fourcc, self.fps, 
+            (Config.CAM_WIDTH, Config.CAM_HEIGHT)
+        )
+        
+        self.is_recording = True
+        self.recording_start_time = time.time()
+        
+        print(f"[INFO] Started recording: {video_filename}")
+        return video_filename
+    
     def add_frame(self, frame):
-        """Adds a frame to the current video if recording."""
-        with self.recording_lock:
-            if self.is_recording and self.video_writer and self.video_writer.isOpened():
-                self.video_writer.write(frame)
-
+        """Add a frame to the current recording"""
+        if self.is_recording and self.video_writer:
+            self.video_writer.write(frame)
+            
+            # Check if recording duration is complete
+            if time.time() - self.recording_start_time >= self.duration:
+                self.stop_recording()
+    
     def stop_recording(self):
-        """Stops the recording and releases the writer."""
-        with self.recording_lock:
-            if self.is_recording:
-                self.is_recording = False
-                if self.video_writer:
-                    self.video_writer.release()
-                    self.video_writer = None
+        """Stop the current recording"""
+        if self.is_recording and self.video_writer:
+            self.video_writer.release()
+            self.video_writer = None
+            self.is_recording = False
+            print("[INFO] Recording stopped")
 
-# (PersonRecognizer and EmotionRecognizer are unchanged)
-class PersonRecognizer:
-    """DeepFace-based person recognition"""
-    def __init__(self, faces_dir=Config.FACES_DIR):
-        self.faces_dir = faces_dir
-        self.known_faces = self.load_faces()
-
-    def load_faces(self):
-        if not os.path.exists(self.faces_dir):
-            print(f"⚠️ Faces directory '{self.faces_dir}' not found.")
-            return []
-        faces = []
-        for filename in os.listdir(self.faces_dir):
-            if filename.endswith((".jpg", ".png")):
-                name = os.path.splitext(filename)[0]
-                path = os.path.join(self.faces_dir, filename)
-                faces.append((name, path))
-        print(f"✅ Loaded {len(faces)} known faces.")
-        return faces
-
-    def recognize(self, frame, person_box):
-        x1, y1, x2, y2 = person_box
-        person_roi = frame[y1:y2, x1:x2]
-        name = "Unknown"
-        try:
-            for known_name, known_path in self.known_faces:
-                result = DeepFace.verify(person_roi, known_path, enforce_detection=False, model_name='VGG-Face', distance_metric='cosine')
-                if result["verified"]:
-                    name = known_name
-                    break
-        except Exception: pass
-        return name
-
-class EmotionRecognizer:
-    """DeepFace-based emotion analysis"""
-    def analyze(self, frame, person_box):
-        x1, y1, x2, y2 = person_box
-        person_roi = frame[y1:y2, x1:x2]
-        emotion = "N/A"
-        try:
-            result = DeepFace.analyze(person_roi, actions=['emotion'], enforce_detection=False)
-            if isinstance(result, list): result = result[0]
-            emotion = result["dominant_emotion"]
-        except Exception: pass
-        return emotion
-
-
-# ------------------- Camera Server -------------------
-class SimpleCameraServer:
-    def __init__(self, camera_id: int = 0):
+class CameraServer:
+    """Main camera server that handles both surveillance and monitoring"""
+    
+    def __init__(self, camera_id=0):
         self.camera_id = camera_id
         self.cap = None
-        self.frame = None 
-        self.raw_frame = None
         self._running = False
         self._frame_lock = threading.Lock()
-        self.active_modules = {"surveillance": False, "monitor": False}
-
-        self._last_event_time = 0
+        self.frame = None
+        self.raw_frame = None
+        
+        # Module states
+        self.active_modules = {'surveillance': False, 'monitor': False}
+        
+        # Services
+        self.detection_service = None
+        self.pose_service = None
+        
+        # Background subtractor for motion detection
+        self.background_subtractor = cv2.createBackgroundSubtractorMOG2(
+            history=500, varThreshold=50, detectShadows=True
+        )
+        
+        # Video recorder
         self.video_recorder = VideoRecorder()
         
-        # --- OPTIMIZATION: Model Consolidation ---
-        self.object_detector = None
-        self.pose_estimator = None
-        self.person_recognizer = None
-        self.emotion_recognizer = None
-
-        # --- OPTIMIZATION: Frame Skipping ---
+        # Event tracking
+        self.last_event_times = {}
         self.frame_counter = 0
-
-        self._file_lock = threading.Lock()
+        
+        # Flask app
         self.app = Flask(__name__)
-        self.setup_routes()
-
-    def setup_routes(self):
+        self._setup_routes()
+        
+        print("[INFO] Camera Server initialized")
+    
+    def _setup_routes(self):
+        """Setup Flask routes"""
+        
         @self.app.route('/stream')
-        def mjpeg_stream():
+        def stream():
+            """Video streaming endpoint"""
             def generate_frames():
                 while self._running:
-                    try:
-                        with self._frame_lock:
-                            if self.frame is not None:
-                                _, buffer = cv2.imencode('.jpg', self.frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+                    with self._frame_lock:
+                        if self.frame is not None:
+                            ret, buffer = cv2.imencode('.jpg', self.frame, 
+                                                     [cv2.IMWRITE_JPEG_QUALITY, 80])
+                            if ret:
                                 frame_bytes = buffer.tobytes()
                                 yield (b'--frame\r\n'
-                                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-                        time.sleep(0.033)
-                    except Exception as e:
-                        print(f"❌ Error in MJPEG stream: {e}")
-                        break
-            return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+                                      b'Content-Type: image/jpeg\r\n\r\n' + 
+                                      frame_bytes + b'\r\n')
+                    time.sleep(1/30)  # 30 FPS
+            
+            return Response(generate_frames(), 
+                          mimetype='multipart/x-mixed-replace; boundary=frame')
         
         @self.app.route('/api/status')
-        def api_status(): return jsonify(self.get_camera_info())
-
+        def status():
+            """API status endpoint"""
+            return jsonify({
+                'status': 'running' if self._running else 'stopped',
+                'modules': self.active_modules,
+                'camera_info': self.get_camera_info()
+            })
+        
         @self.app.route('/api/detection/config', methods=['POST'])
-        def configure_detection():
-            config = request.get_json()
-            if 'surveillance' in config: self.active_modules['surveillance'] = config['surveillance']
-            if 'monitor' in config: self.active_modules['monitor'] = config['monitor']
-            print(f"✅ Detection config updated: {self.active_modules}")
-            return jsonify({"success": True, "message": "Config updated"})
-
-    def start(self) -> bool:
-        if self._running: return True
-        try:
-            self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_DSHOW)
-            if not self.cap.isOpened():
-                self.cap = cv2.VideoCapture(self.camera_id)
-                if not self.cap.isOpened():
-                    print("❌ All camera backend attempts failed."); return False
-            print("✅ Camera opened successfully.")
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, Config.CAM_WIDTH)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Config.CAM_HEIGHT)
-            self._running = True
-            os.makedirs(Config.CAPTURES_DIR, exist_ok=True)
-            os.makedirs(Config.RECORDINGS_DIR, exist_ok=True)
-            self.start_capture_thread()
-            return True
-        except Exception as e:
-            print(f"❌ Camera start error: {e}"); return False
-
-    def stop(self):
-        self._running = False
-        self.video_recorder.stop_recording()
-        time.sleep(0.5)
-        if self.cap: self.cap.release(); self.cap = None
-        print("✅ Camera capture stopped.")
-
-    def _create_and_save_event(self, event_data):
-        # This function can be offloaded to a queue/thread for more performance
-        with self._file_lock:
-            # Capture image
-            filename = f"event_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.jpg"
-            filepath = os.path.join(Config.CAPTURES_DIR, filename)
-            local_raw_frame = self.raw_frame.copy() if self.raw_frame is not None else None
-            if local_raw_frame is not None:
-                cv2.imwrite(filepath, local_raw_frame)
-                event_data["image_path"] = filename
-            
-            # Save to JSON
+        def update_detection_config():
+            """Update detection configuration"""
             try:
-                events_list = []
-                if os.path.exists(Config.EVENTS_FILE) and os.path.getsize(Config.EVENTS_FILE) > 0:
-                    with open(Config.EVENTS_FILE, 'r') as f: events_list = json.load(f)
-                events_list.insert(0, event_data)
-                with open(Config.EVENTS_FILE, 'w') as f: json.dump(events_list, f, indent=4)
-            except (IOError, json.JSONDecodeError) as e:
-                print(f"❌ Error writing to {Config.EVENTS_FILE}: {e}")
-
+                data = request.get_json()
+                if data:
+                    self.active_modules.update(data)
+                    print(f"[INFO] Module states updated: {self.active_modules}")
+                    
+                    # Initialize services based on active modules
+                    self._initialize_services()
+                    
+                return jsonify({'success': True, 'modules': self.active_modules})
+            except Exception as e:
+                return jsonify({'success': False, 'error': str(e)}), 400
+    
+    def _initialize_services(self):
+        """Initialize AI services based on active modules"""
+        try:
+            # Initialize detection service for surveillance
+            if self.active_modules['surveillance'] and self.detection_service is None:
+                print("[INFO] Initializing detection service...")
+                self.detection_service = DetectionService(Config.INFERNO_MODEL_PATH)
+            
+            # Initialize pose service for monitoring
+            if self.active_modules['monitor'] and self.pose_service is None:
+                print("[INFO] Initializing pose service...")
+                self.pose_service = PoseService(Config.POSE_MODEL_PATH)
+                
+        except Exception as e:
+            print(f"❌ Error initializing services: {e}")
+    
+    def _create_and_save_event(self, event):
+        """Create and save event to events.json"""
+        try:
+            events = []
+            if os.path.exists(Config.EVENTS_FILE):
+                try:
+                    with open(Config.EVENTS_FILE, 'r') as f:
+                        events = json.load(f)
+                except (json.JSONDecodeError, IOError):
+                    events = []
+            
+            # Add new event at the beginning
+            events.insert(0, event)
+            
+            # Keep only last 1000 events
+            if len(events) > 1000:
+                events = events[:1000]
+            
+            # Save to file
+            with open(Config.EVENTS_FILE, 'w') as f:
+                json.dump(events, f, indent=4)
+            
+            print(f"[INFO] Event logged: {event['class_name']} ({event['module']})")
+            
+        except Exception as e:
+            print(f"❌ Error saving event: {e}")
+    
+    def _is_on_cooldown(self, event_type):
+        """Check if an event type is on cooldown"""
+        current_time = time.time()
+        last_time = self.last_event_times.get(event_type, 0)
+        return (current_time - last_time) < Config.EVENT_COOLDOWN
+    
+    def _update_event_time(self, event_type):
+        """Update the last event time for a specific type"""
+        self.last_event_times[event_type] = time.time()
+    
     def capture_frames(self):
-        while self._running and self.cap:
+        """Main frame capture and processing loop"""
+        print("[INFO] Starting frame capture thread...")
+        
+        while self._running:
             ret, frame = self.cap.read()
             if not ret:
-                time.sleep(0.1); continue
-
-            self.frame_counter += 1
-            with self._frame_lock: self.raw_frame = frame.copy()
+                print("❌ Failed to read frame from camera")
+                break
             
-            # --- OPTIMIZATION: Resize frame ONCE for all models ---
-            inference_frame = cv2.resize(frame, (Config.INFERENCE_SIZE, Config.INFERENCE_SIZE))
+            # Store raw frame
+            self.raw_frame = frame.copy()
             
-            processed_frame = frame.copy()
-            self.video_recorder.add_frame(self.raw_frame)
+            # Resize frame for processing
+            processed_frame = cv2.resize(frame, (Config.CAM_WIDTH, Config.CAM_HEIGHT))
             
-            current_time = time.time()
-            on_cooldown = (current_time - self._last_event_time) < Config.EVENT_COOLDOWN
-
-            # --- LAZY LOADING MODELS ---
-            if self.active_modules['surveillance'] and self.object_detector is None:
-                print("⏳ Loading Object Detection model...")
-                self.object_detector = YOLO(Config.OBJECT_DETECTION_MODEL)
-                print("✅ Object Detection model loaded.")
-            if self.active_modules['monitor'] and self.pose_estimator is None:
-                print("⏳ Loading Monitor Me models (Pose, Face)...")
-                self.pose_estimator = YOLO(Config.POSE_ESTIMATION_MODEL)
-                self.person_recognizer = PersonRecognizer()
-                self.emotion_recognizer = EmotionRecognizer()
-                print("✅ Monitor Me models loaded.")
-
-            # ----- SURVEILLANCE MODULE -----
-            if self.active_modules['surveillance'] and self.object_detector:
-                results = self.object_detector(inference_frame, verbose=False)
-                detections_found = []
-                for res in results:
-                    for box in res.boxes:
-                        class_name = self.object_detector.names[int(box.cls[0])]
-                        if class_name in Config.SURVEILLANCE_CLASSES:
-                            # OPTIMIZATION: Scale bounding box back to original frame size
-                            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
-                            x1, y1 = int(x1 * Config.CAM_WIDTH / Config.INFERENCE_SIZE), int(y1 * Config.CAM_HEIGHT / Config.INFERENCE_SIZE)
-                            x2, y2 = int(x2 * Config.CAM_WIDTH / Config.INFERENCE_SIZE), int(y2 * Config.CAM_HEIGHT / Config.INFERENCE_SIZE)
-                            
-                            label = f'{class_name} {box.conf[0]:.2f}'
-                            cv2.rectangle(processed_frame, (x1, y1), (x2, y2), (0, 165, 255), 2)
-                            cv2.putText(processed_frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2)
-                            detections_found.append(class_name)
-                
-                if detections_found and not on_cooldown:
-                    self._last_event_time = current_time
-                    video_path = self.video_recorder.start_recording(self.raw_frame)
-                    event = {"id": str(uuid.uuid4()), "timestamp": datetime.datetime.now().isoformat(), "module": "surveillance",
-                             "class_name": f"Object Detected: {', '.join(set(detections_found))}", "video_path": video_path}
-                    self._create_and_save_event(event)
-
-            # ----- MONITOR ME MODULE -----
-            if self.active_modules['monitor'] and self.pose_estimator:
-                results = self.pose_estimator(inference_frame, verbose=False)
-                is_falling = False
-                person_boxes = []
-
-                for res in results:
-                    if res.boxes and len(res.boxes) > 0:
-                        for box in res.boxes:
-                            w, h = box.xywh[0][2:].cpu().numpy()
-                            if w > 0 and h > 0 and (w / h) > 1.4:
-                                is_falling = True; color = (0, 0, 255)
-                            else: color = (0, 255, 0)
-                            
-                            # Scale box for drawing and face analysis
-                            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
-                            x1_orig, y1_orig = int(x1 * Config.CAM_WIDTH / Config.INFERENCE_SIZE), int(y1 * Config.CAM_HEIGHT / Config.INFERENCE_SIZE)
-                            x2_orig, y2_orig = int(x2 * Config.CAM_WIDTH / Config.INFERENCE_SIZE), int(y2 * Config.CAM_HEIGHT / Config.INFERENCE_SIZE)
-                            person_boxes.append([x1_orig, y1_orig, x2_orig, y2_orig])
-
-                            activity = "Falling" if is_falling else "Stable"
-                            cv2.rectangle(processed_frame, (x1_orig, y1_orig), (x2_orig, y2_orig), color, 2)
-                            cv2.putText(processed_frame, activity, (x1_orig, y1_orig - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-
-                # --- OPTIMIZATION: Process expensive tasks every N frames ---
-                if person_boxes and (self.frame_counter % Config.PROCESS_INTERVAL == 0):
-                    for box in person_boxes:
-                        name = self.person_recognizer.recognize(processed_frame, box)
-                        emotion = self.emotion_recognizer.analyze(processed_frame, box)
-                        cv2.putText(processed_frame, f"{name} ({emotion})", (box[0], box[3] + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
-
-                if is_falling and not on_cooldown:
-                    self._last_event_time = current_time
-                    video_path = self.video_recorder.start_recording(self.raw_frame)
-                    event = {"id": str(uuid.uuid4()), "timestamp": datetime.datetime.now().isoformat(), "module": "monitor",
-                             "class_name": "Fall Detected", "video_path": video_path}
-                    self._create_and_save_event(event)
-
+            # Add video recorder frame if recording
+            if self.video_recorder.is_recording:
+                self.video_recorder.add_frame(processed_frame)
+            
+            # Process frames based on active modules
+            if any(self.active_modules.values()):
+                processed_frame = self._process_frame(processed_frame)
+            
+            # Add system info overlay
+            processed_frame = self._add_info_overlay(processed_frame)
+            
+            # Store processed frame
             with self._frame_lock:
                 self.frame = processed_frame
-
-    def start_capture_thread(self):
-        threading.Thread(target=self.capture_frames, daemon=True).start()
-
-    def get_camera_info(self): return {"is_running": self._running}
-
+            
+            self.frame_counter += 1
+            time.sleep(1/Config.CAM_FPS)
+    
+    def _process_frame(self, frame):
+        """Process frame with active AI modules"""
+        current_time = time.time()
+        
+        # ----- SURVEILLANCE MODULE -----
+        if self.active_modules['surveillance'] and self.detection_service:
+            # Run inference every N frames for performance
+            if self.frame_counter % Config.INFERENCE_INTERVAL == 0:
+                # Fire detection
+                frame, fire_detected, fire_confidence = self.detection_service.detect_fire(frame)
+                
+                if fire_detected and not self._is_on_cooldown('fire'):
+                    self._update_event_time('fire')
+                    image_path = self.detection_service.save_frame(frame, "fire_detection")
+                    self.detection_service.log_event(
+                        "Fire Detected",
+                        confidence=fire_confidence,
+                        image_path=image_path
+                    )
+                    # Start recording for fire events
+                    video_path = self.video_recorder.start_recording(self.raw_frame)
+                    print(f"[ALERT] FIRE DETECTED! Confidence: {fire_confidence:.2f}")
+                
+                # Smoke detection
+                frame, smoke_detected, smoke_confidence = self.detection_service.detect_smoke(frame)
+                
+                if smoke_detected and not self._is_on_cooldown('smoke'):
+                    self._update_event_time('smoke')
+                    image_path = self.detection_service.save_frame(frame, "smoke_detection")
+                    self.detection_service.log_event(
+                        "Smoke Detected",
+                        confidence=smoke_confidence,
+                        image_path=image_path
+                    )
+                    # Start recording for smoke events
+                    video_path = self.video_recorder.start_recording(self.raw_frame)
+                    print(f"[ALERT] SMOKE DETECTED! Confidence: {smoke_confidence:.2f}")
+                
+                # Motion detection
+                frame, motion_detected, motion_areas = self.detection_service.detect_motion(
+                    frame, self.background_subtractor
+                )
+                
+                if motion_detected and len(motion_areas) > 0 and not self._is_on_cooldown('motion'):
+                    # Check for significant motion
+                    significant_motion = any((area[2] * area[3]) > 5000 for area in motion_areas)
+                    
+                    if significant_motion:
+                        self._update_event_time('motion')
+                        image_path = self.detection_service.save_frame(frame, "motion_detection")
+                        self.detection_service.log_event(
+                            "Major Motion Detected",
+                            confidence=len(motion_areas) / 10.0,
+                            motion_areas=motion_areas,
+                            image_path=image_path
+                        )
+                        # Start recording for significant motion
+                        video_path = self.video_recorder.start_recording(self.raw_frame)
+                        print(f"[INFO] Major motion detected: {len(motion_areas)} areas")
+        
+        # ----- MONITOR MODULE -----
+        if self.active_modules['monitor'] and self.pose_service:
+            # Run inference every N frames for performance
+            if self.frame_counter % Config.INFERENCE_INTERVAL == 0:
+                frame, poses, activities = self.pose_service.detect_poses(frame)
+                
+                # Log activity events
+                for i, activity in enumerate(activities):
+                    if not self._is_on_cooldown(f'activity_{activity}'):
+                        confidence = poses[i]['confidence'] if i < len(poses) else 0.0
+                        image_path = self.pose_service.save_frame(frame, activity.lower())
+                        
+                        self.pose_service.log_event(
+                            activity,
+                            confidence=confidence,
+                            pose_data=poses[i] if i < len(poses) else None,
+                            image_path=image_path
+                        )
+                        
+                        self._update_event_time(f'activity_{activity}')
+                        
+                        # Special handling for falling
+                        if activity == "Falling":
+                            video_path = self.video_recorder.start_recording(self.raw_frame)
+                            print(f"[ALERT] FALLING DETECTED! Confidence: {confidence:.2f}")
+                        else:
+                            print(f"[INFO] {activity} detected - Confidence: {confidence:.2f}")
+        
+        return frame
+    
+    def _add_info_overlay(self, frame):
+        """Add system information overlay to frame"""
+        # System status
+        active_count = sum(self.active_modules.values())
+        status_text = f"ACTIVE ({active_count})" if active_count > 0 else "STANDBY"
+        status_color = (0, 255, 0) if active_count > 0 else (255, 255, 0)
+        
+        # Timestamp
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Module status
+        modules_text = ""
+        if self.active_modules['surveillance']:
+            modules_text += "SURV "
+        if self.active_modules['monitor']:
+            modules_text += "MON "
+        
+        # Recording status
+        recording_text = "REC" if self.video_recorder.is_recording else ""
+        
+        # Add overlays
+        cv2.putText(frame, f"HomePal - {status_text}", 
+                   (10, frame.shape[0] - 80), cv2.FONT_HERSHEY_SIMPLEX, 0.6, status_color, 2)
+        cv2.putText(frame, f"Time: {timestamp}", 
+                   (10, frame.shape[0] - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        cv2.putText(frame, f"Modules: {modules_text.strip()}", 
+                   (10, frame.shape[0] - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        cv2.putText(frame, f"Frame: {self.frame_counter} {recording_text}", 
+                   (10, frame.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        
+        return frame
+    
+    def start(self):
+        """Start the camera server"""
+        try:
+            print(f"[INFO] Starting camera {self.camera_id}...")
+            self.cap = cv2.VideoCapture(self.camera_id)
+            
+            if not self.cap.isOpened():
+                print(f"❌ Error: Could not open camera {self.camera_id}")
+                return False
+            
+            # Set camera properties
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, Config.CAM_WIDTH)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Config.CAM_HEIGHT)
+            self.cap.set(cv2.CAP_PROP_FPS, Config.CAM_FPS)
+            
+            self._running = True
+            
+            # Start capture thread
+            threading.Thread(target=self.capture_frames, daemon=True).start()
+            
+            print("[SUCCESS] Camera server started successfully")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to start camera server: {e}")
+            return False
+    
+    def stop(self):
+        """Stop the camera server"""
+        print("[INFO] Stopping camera server...")
+        self._running = False
+        
+        if self.cap:
+            self.cap.release()
+        
+        if self.video_recorder:
+            self.video_recorder.stop_recording()
+        
+        print("[SUCCESS] Camera server stopped")
+    
+    def get_camera_info(self):
+        """Get camera information"""
+        if self.cap:
+            return {
+                "width": int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                "height": int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+                "fps": self.cap.get(cv2.CAP_PROP_FPS),
+                "is_running": self._running
+            }
+        return {"is_running": self._running}
+    
     def run_server(self, host='0.0.0.0', port=5001, debug=False):
+        """Run the Flask server"""
+        print(f"[INFO] Starting Flask server on {host}:{port}")
         self.app.run(host=host, port=port, debug=debug, threaded=True)
 
-if __name__ == "__main__":
-    camera = SimpleCameraServer(camera_id=0)
+def main():
+    """Main entry point"""
+    print("[INFO] Starting HomePal Camera Server")
+    
+    camera = CameraServer(camera_id=0)
     if camera.start():
-        try: camera.run_server()
-        finally: camera.stop()
+        try:
+            camera.run_server()
+        except KeyboardInterrupt:
+            print("\n[INFO] Server stopped by user")
+        finally:
+            camera.stop()
+    else:
+        print("❌ Failed to start camera server")
+
+if __name__ == "__main__":
+    main()
