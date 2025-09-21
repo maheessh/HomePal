@@ -10,6 +10,7 @@ import sys
 import os
 import time
 import argparse
+import subprocess
 from datetime import datetime
 
 # Add services to path
@@ -32,7 +33,7 @@ class HomeSurveillance:
         self.is_running = False
         self.last_fire_log = 0
         self.last_motion_log = 0
-        self.log_cooldown = 0  # No cooldown - log events immediately
+        self.log_cooldown = 5.0  # 5 second cooldown to reduce excessive logging
         
     def start(self):
         """Start the surveillance system"""
@@ -42,6 +43,8 @@ class HomeSurveillance:
         print("📝 Events logged to: events.json")
         print("🌐 Stream available at: /stream")
         print("Press 'q' to quit")
+        # Start fire server
+        self._start_fire_server()
         
         cap = cv2.VideoCapture(self.video_source)
         if not cap.isOpened():
@@ -103,10 +106,7 @@ class HomeSurveillance:
                         self.last_motion_log = current_time
                         print(f"🏃 Major motion detected: {len(motion_areas)} areas")
                 
-                # Add system info overlay
-                self._add_info_overlay(processed_frame, frame_count, fire_confidence)
-                
-                # Display frame (for local testing)
+                # Display clean frame without overlays (for local testing)
                 cv2.imshow('Home Surveillance', processed_frame)
                 
                 # Check for quit
@@ -154,6 +154,42 @@ class HomeSurveillance:
             cap.release()
         cv2.destroyAllWindows()
         print("🛑 Home Surveillance System stopped")
+        self._stop_fire_server()
+
+    def _start_fire_server(self):
+        """Start the dedicated fire detection server in background."""
+        try:
+            project_root = os.path.dirname(os.path.dirname(__file__))
+            fireserv_path = os.path.join(project_root, 'fireserv.py')
+            if not os.path.exists(fireserv_path):
+                print("⚠️ Fire server script not found; skipping start.")
+                self._fire_proc = None
+                return
+            python_exec = os.path.join(project_root, 'venv', 'Scripts', 'python.exe') if sys.platform == 'win32' else os.path.join(project_root, 'venv', 'bin', 'python')
+            if not os.path.exists(python_exec):
+                python_exec = sys.executable
+            creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            self._fire_proc = subprocess.Popen([python_exec, fireserv_path], cwd=project_root, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, creationflags=creationflags)
+            print("🔥 Fire server started in background.")
+        except Exception as e:
+            print(f"❌ Failed to start fire server: {e}")
+            self._fire_proc = None
+
+    def _stop_fire_server(self):
+        """Stop the fire detection server if running."""
+        try:
+            proc = getattr(self, '_fire_proc', None)
+            if not proc:
+                return
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except Exception:
+                proc.kill()
+            self._fire_proc = None
+            print("🔥 Fire server stopped.")
+        except Exception as e:
+            print(f"⚠️ Failed to stop fire server: {e}")
 
 def main():
     """Main entry point"""

@@ -63,7 +63,8 @@ class FireService:
     def detect_fire(self, frame: np.ndarray) -> Tuple[np.ndarray, bool, float]:
         """Detect fire in a frame.
 
-        Returns: (vis_frame, detected_bool, confidence_float)
+        Returns: (clean_frame, detected_bool, confidence_float)
+        Note: Returns clean frame without any visual overlays for surveillance mode
         """
         if frame is None or frame.size == 0:
             return frame, False, 0.0
@@ -77,28 +78,16 @@ class FireService:
                 # Fallback parse: treat any non-empty output as detection
                 detected = bool(det)
                 confidence = 0.8 if detected else 0.0
-                vis = frame.copy()
-                # If boxes are present, draw them
-                if isinstance(det, (list, tuple)) and det and isinstance(det[0], (list, tuple, np.ndarray)):
-                    for box in det:
-                        try:
-                            x1, y1, x2, y2 = [int(v) for v in box[:4]]
-                            cv2.rectangle(vis, (x1, y1), (x2, y2), (0, 80, 255), 2)
-                        except Exception:
-                            continue
-                if detected:
-                    self._draw_label(vis, "FIRE", (10, 30))
-                return vis, detected, confidence
+                # Return clean frame without any drawing
+                return frame, detected, confidence
             except Exception:
                 # Continue to fallback below
                 pass
 
         # Fallback: reuse DetectionService fire heuristic/model if available
         mask, detected, confidence = self._detect_fire_fallback(frame)
-        vis = self._overlay_mask(frame, mask, color=(0, 80, 255))
-        if detected:
-            self._draw_label(vis, f"FIRE {confidence:.2f}", (10, 30))
-        return vis, detected, confidence
+        # Return clean frame without any visual overlays
+        return frame, detected, confidence
 
     # -----------------------
     # Fallback detection via DetectionService (includes color heuristic)
@@ -138,8 +127,8 @@ class FireService:
             vis = (vis.astype(np.float32) * (1 - alpha)[..., None] + mask_color.astype(np.float32) * alpha[..., None]).astype(np.uint8)
         return vis
 
-    def _draw_label(self, frame: np.ndarray, text: str, org: Tuple[int, int]) -> None:
-        cv2.putText(frame, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 80, 255), 2)
+    def _draw_label(self, frame: np.ndarray, text: str, org: Tuple[int, int], color=(0, 80, 255)) -> None:
+        cv2.putText(frame, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
 
 
 __all__ = ["FireService"]

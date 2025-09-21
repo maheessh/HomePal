@@ -1,25 +1,329 @@
 {
   "events": [
     {
-      "id": "f0fc62d5-ab13-4d83-a3aa-26e97c54089c",
-      "timestamp": "2025-09-21T03:16:17.558091",
-      "module": "monitor",
-      "class_name": "Fall",
-      "notification": true,
-      "image_path": "capture_f0fc62d5-ab13-4d83-a3aa-26e97c54089c.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "health",
-        "alert_level": "critical"
-      }
-    },
-    {
-      "id": "0f301d73-3133-4159-84e1-d163714cf38a",
-      "timestamp": "2025-09-21T01:54:30.515721",
+      "id": "c18749b5-fb6e-4bbb-a153-023bbd64a0e3",
+      "timestamp": "2025-09-21T08:39:21.135068",
       "module": "surveillance",
       "class_name": "Motion",
       "notification": true,
-      "image_path": "capture_0f301d73-3133-4159-84e1-d163714cf38a.jpg",
+      "image_path": "capture_c18749b5-fb6e-4bbb-a153-023bbd64a0e3.jpg",
+      "description": null,
+      "metadata": {
+        "category": "motion",
+        "alert_level": "low"
+      }
+    },
+    {
+      "id": "0549b396-4689-489a-ab03-565516c7aaed",
+      "timestamp": "2025-09-21T08:39:11.120129",
+      "module": "surveillance",
+      "class_name": "Motion",
+      "notification": true,
+      "image_path": "capture_0549b396-4689-489a-ab03-565516c7aaed.jpg",
+      "description": null,
+      "metadata": {
+        "category": "motion",
+        "alert_level": "low"
+      }
+    },
+    {
+      "id": "2792f029-8fed-437c-b679-87179c12725e",
+      "timestamp": "2025-09-21T08:39:01.107755",
+      "module": "surveillance",
+      "class_name": "Motion",
+      "notification": true,
+      "image_path": "capture_2792f029-8fed-437c-b679-87179c12725e.jpg",
+      "description": null,
+      "metadata": {
+        "category": "motion",
+        "alert_level": "low"
+      }
+    },
+    {
+      "id": "18ba6393-1f00-4c01-9337-9e94a246f1ec",
+      "timestamp": "2025-09-21T08:38:51.071270",
+      "module": "surveillance",
+      "class_name": "Motion",
+      "notification": true,
+      "image_path": "capture_18ba6393-1f00-4c01-9337-9e94a246f1ec.jpg",
+      "description": null,
+      "metadata": {
+        "category": "motion",
+        "alert_level": "low"
+      }
+    },
+    {
+      "id": "63d7cdca-fa5b-4c8e-aaed-7c3101792be1",
+      "timestamp": "2025-09-21T08:38:42.196695",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_63d7cdca-fa5b-4c8e-aaed-7c3101792be1.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.7625813802083334
+      }
+    },
+    {
+      "id": "7232743a-5fa3-47ce-916d-ed0ef82a3940",
+      "timestamp": "2025-09-21T08:38:42.158002",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_7232743a-5fa3-47ce-916d-ed0ef82a3940.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.8424641927083332
+      }
+    },
+    {
+      "id": "1b6d61fc-10ae-4cc6-b86f-ec0a25d0ebbe",
+      "timestamp": "2025-09-21T08:38:42.117332",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_1b6d61fc-10ae-4cc6-b86f-ec0a25d0ebbe.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.8905192057291667
+      }
+    },
+    {
+      "id": "468b8009-92f9-4fb4-8613-8a6070329a86",
+      "timestamp": "2025-09-21T08:38:42.063794",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_468b8009-92f9-4fb4-8613-8a6070329a86.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.8707519531250001
+      }
+    },
+    {
+      "id": "f5c29566-b82b-437a-9af7-cb15b83937a0",
+      "timestamp": "2025-09-21T08:38:42.023673",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_f5c29566-b82b-437a-9af7-cb15b83937a0.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.8564615885416667
+      }
+    },
+    {
+      "id": "a5a49b61-d2b4-413f-8a06-e2e980c6e553",
+      "timestamp": "2025-09-21T08:38:41.985673",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_a5a49b61-d2b4-413f-8a06-e2e980c6e553.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.8203206380208334
+      }
+    },
+    {
+      "id": "697abc65-e6a6-4858-9a4f-f2fa057d13d5",
+      "timestamp": "2025-09-21T08:38:41.948523",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_697abc65-e6a6-4858-9a4f-f2fa057d13d5.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.8277262369791667
+      }
+    },
+    {
+      "id": "bd31f927-1564-4ff3-b2cb-1fcb6481d848",
+      "timestamp": "2025-09-21T08:38:41.905843",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_bd31f927-1564-4ff3-b2cb-1fcb6481d848.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.7973714192708334
+      }
+    },
+    {
+      "id": "6098e22c-1e6a-4bc4-b351-90e1afc4aaa0",
+      "timestamp": "2025-09-21T08:38:41.864555",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_6098e22c-1e6a-4bc4-b351-90e1afc4aaa0.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.7978434244791666
+      }
+    },
+    {
+      "id": "0898d12b-d832-4690-8e0b-af8633d873c3",
+      "timestamp": "2025-09-21T08:38:41.820353",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_0898d12b-d832-4690-8e0b-af8633d873c3.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.7846435546874999
+      }
+    },
+    {
+      "id": "d274900e-3fd9-4e57-94b0-783a1e6d9c0c",
+      "timestamp": "2025-09-21T08:38:41.760272",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_d274900e-3fd9-4e57-94b0-783a1e6d9c0c.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.7697916666666667
+      }
+    },
+    {
+      "id": "a68518ec-0206-495f-875b-d1678084aa2a",
+      "timestamp": "2025-09-21T08:38:41.719549",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_a68518ec-0206-495f-875b-d1678084aa2a.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.7479899088541666
+      }
+    },
+    {
+      "id": "7539f996-eda7-40ac-ac4d-6e090587fddc",
+      "timestamp": "2025-09-21T08:38:41.685952",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_7539f996-eda7-40ac-ac4d-6e090587fddc.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.716064453125
+      }
+    },
+    {
+      "id": "221183cd-4b3a-4732-9e50-d799f5895b1c",
+      "timestamp": "2025-09-21T08:38:41.066332",
+      "module": "surveillance",
+      "class_name": "Motion",
+      "notification": true,
+      "image_path": "capture_221183cd-4b3a-4732-9e50-d799f5895b1c.jpg",
+      "description": null,
+      "metadata": {
+        "category": "motion",
+        "alert_level": "low"
+      }
+    },
+    {
+      "id": "a4def188-98c9-49d8-a299-fbc945705e93",
+      "timestamp": "2025-09-21T08:38:37.692876",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_a4def188-98c9-49d8-a299-fbc945705e93.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.7303873697916667
+      }
+    },
+    {
+      "id": "5402d8a4-0e14-4e84-9704-3713408cc513",
+      "timestamp": "2025-09-21T08:38:37.652182",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_5402d8a4-0e14-4e84-9704-3713408cc513.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.781494140625
+      }
+    },
+    {
+      "id": "2f13ab08-b2aa-4198-9119-3d175f5fbb1d",
+      "timestamp": "2025-09-21T08:38:37.618997",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_2f13ab08-b2aa-4198-9119-3d175f5fbb1d.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.8160156249999999
+      }
+    },
+    {
+      "id": "46b0b8f1-8857-4aa4-b415-7398de5b72e8",
+      "timestamp": "2025-09-21T08:38:37.585441",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_46b0b8f1-8857-4aa4-b415-7398de5b72e8.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.7797281901041666
+      }
+    },
+    {
+      "id": "ee87731b-7306-4b39-a71f-b82eaa5bf76c",
+      "timestamp": "2025-09-21T08:38:37.556588",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_ee87731b-7306-4b39-a71f-b82eaa5bf76c.jpg",
+      "description": null,
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.7143636067708334
+      }
+    },
+    {
+      "id": "b6799dca-15dd-4e97-a07c-fa82793c3031",
+      "timestamp": "2025-09-21T08:38:31.050952",
+      "module": "surveillance",
+      "class_name": "Motion",
+      "notification": true,
+      "image_path": "capture_b6799dca-15dd-4e97-a07c-fa82793c3031.jpg",
       "description": "Description could not be generated.",
       "metadata": {
         "category": "motion",
@@ -27,12 +331,12 @@
       }
     },
     {
-      "id": "cff0de6c-8485-4544-a700-ea365586f354",
-      "timestamp": "2025-09-21T01:54:20.025718",
+      "id": "798f5ed0-db3a-4a74-81b7-89e9cc435a64",
+      "timestamp": "2025-09-21T08:38:11.022633",
       "module": "surveillance",
       "class_name": "Motion",
       "notification": true,
-      "image_path": "capture_cff0de6c-8485-4544-a700-ea365586f354.jpg",
+      "image_path": "capture_798f5ed0-db3a-4a74-81b7-89e9cc435a64.jpg",
       "description": "Description could not be generated.",
       "metadata": {
         "category": "motion",
@@ -40,12 +344,26 @@
       }
     },
     {
-      "id": "e415c7fd-bf11-4d53-a5a5-e1535252121c",
-      "timestamp": "2025-09-21T01:53:07.109580",
+      "id": "714b8dd4-7d75-4d7f-8980-2e2c3d8c033b",
+      "timestamp": "2025-09-21T08:38:07.542635",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_714b8dd4-7d75-4d7f-8980-2e2c3d8c033b.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.700439453125
+      }
+    },
+    {
+      "id": "f4ce00c4-fb9f-437f-a008-444b1952a0c7",
+      "timestamp": "2025-09-21T08:38:00.997214",
       "module": "surveillance",
       "class_name": "Motion",
       "notification": true,
-      "image_path": "capture_e415c7fd-bf11-4d53-a5a5-e1535252121c.jpg",
+      "image_path": "capture_f4ce00c4-fb9f-437f-a008-444b1952a0c7.jpg",
       "description": "Description could not be generated.",
       "metadata": {
         "category": "motion",
@@ -53,12 +371,12 @@
       }
     },
     {
-      "id": "492785b1-083e-4a4d-885d-09430e5a6aa6",
-      "timestamp": "2025-09-21T01:52:57.092808",
+      "id": "f2ac45fc-4067-4080-a93c-039d73e00ca0",
+      "timestamp": "2025-09-21T08:37:40.963999",
       "module": "surveillance",
       "class_name": "Motion",
       "notification": true,
-      "image_path": "capture_492785b1-083e-4a4d-885d-09430e5a6aa6.jpg",
+      "image_path": "capture_f2ac45fc-4067-4080-a93c-039d73e00ca0.jpg",
       "description": "Description could not be generated.",
       "metadata": {
         "category": "motion",
@@ -66,12 +384,12 @@
       }
     },
     {
-      "id": "ba7cf8fd-b33e-40fd-b202-77ee3df57896",
-      "timestamp": "2025-09-21T01:52:36.996865",
+      "id": "58edf516-b89c-402f-9acd-f5bba7035c43",
+      "timestamp": "2025-09-21T08:37:30.949736",
       "module": "surveillance",
       "class_name": "Motion",
       "notification": true,
-      "image_path": "capture_ba7cf8fd-b33e-40fd-b202-77ee3df57896.jpg",
+      "image_path": "capture_58edf516-b89c-402f-9acd-f5bba7035c43.jpg",
       "description": "Description could not be generated.",
       "metadata": {
         "category": "motion",
@@ -79,276 +397,44 @@
       }
     },
     {
-      "id": "9c39fad1-07de-4a2f-b333-ec059db08573",
-      "timestamp": "2025-09-21T01:52:26.980094",
+      "id": "36006692-6820-4332-8c08-4d8cc252acd2",
+      "timestamp": "2025-09-21T08:37:12.618617",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_36006692-6820-4332-8c08-4d8cc252acd2.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.7845458984375
+      }
+    },
+    {
+      "id": "f8293364-7874-49d1-a26b-a0752a95f3ba",
+      "timestamp": "2025-09-21T08:37:12.586501",
+      "module": "surveillance",
+      "class_name": "Fire",
+      "notification": true,
+      "image_path": "capture_f8293364-7874-49d1-a26b-a0752a95f3ba.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "fire",
+        "alert_level": "critical",
+        "confidence": 0.7834065755208333
+      }
+    },
+    {
+      "id": "b5a8697d-da94-4148-939b-47df38b197ab",
+      "timestamp": "2025-09-21T08:37:08.935809",
       "module": "surveillance",
       "class_name": "Motion",
       "notification": true,
-      "image_path": "capture_9c39fad1-07de-4a2f-b333-ec059db08573.jpg",
+      "image_path": "capture_b5a8697d-da94-4148-939b-47df38b197ab.jpg",
       "description": "Description could not be generated.",
       "metadata": {
         "category": "motion",
         "alert_level": "low"
-      }
-    },
-    {
-      "id": "2f34ce8e-710b-463a-935f-e32cac7b5c8c",
-      "timestamp": "2025-09-21T01:52:16.963726",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_2f34ce8e-710b-463a-935f-e32cac7b5c8c.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "5bb58328-b7fb-434c-b65e-2898ebc1be55",
-      "timestamp": "2025-09-21T01:51:56.915516",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_5bb58328-b7fb-434c-b65e-2898ebc1be55.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "aaf78561-b41d-4473-8dff-4be22d74ea34",
-      "timestamp": "2025-09-21T01:51:46.900566",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_aaf78561-b41d-4473-8dff-4be22d74ea34.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "e8c534ab-a5d9-4595-95cb-7ec22e055230",
-      "timestamp": "2025-09-21T01:48:37.851534",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_e8c534ab-a5d9-4595-95cb-7ec22e055230.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "849c1edd-5033-419a-a70e-a2c6beaaa7d0",
-      "timestamp": "2025-09-21T01:48:22.814108",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_849c1edd-5033-419a-a70e-a2c6beaaa7d0.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "a2007335-5340-4731-95a0-51a25735e048",
-      "timestamp": "2025-09-21T01:48:07.755441",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_a2007335-5340-4731-95a0-51a25735e048.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "962aad40-9ccf-4212-80cd-87c888334dbe",
-      "timestamp": "2025-09-21T01:47:52.716469",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_962aad40-9ccf-4212-80cd-87c888334dbe.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "63250a59-00b5-47c9-ac3f-bbf2bdaeaa07",
-      "timestamp": "2025-09-21T01:47:37.686335",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_63250a59-00b5-47c9-ac3f-bbf2bdaeaa07.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "4de00a82-7954-42c9-9da0-94595d8086f0",
-      "timestamp": "2025-09-21T01:47:22.648221",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_4de00a82-7954-42c9-9da0-94595d8086f0.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "b7f0978f-b933-459d-a83a-a6506034b353",
-      "timestamp": "2025-09-21T01:47:07.618569",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_b7f0978f-b933-459d-a83a-a6506034b353.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "f5d92c0f-aca3-461f-bc35-348f4ee52e13",
-      "timestamp": "2025-09-21T01:41:16.641763",
-      "module": "monitor",
-      "class_name": "Fall",
-      "notification": true,
-      "image_path": "capture_f5d92c0f-aca3-461f-bc35-348f4ee52e13.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "health",
-        "alert_level": "critical"
-      }
-    },
-    {
-      "id": "1f320fe7-c76b-4b7f-9fdb-af446fd6a750",
-      "timestamp": "2025-09-21T01:26:28.439163",
-      "module": "monitor",
-      "class_name": "Fall",
-      "notification": true,
-      "image_path": "capture_1f320fe7-c76b-4b7f-9fdb-af446fd6a750.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "health",
-        "alert_level": "critical"
-      }
-    },
-    {
-      "id": "d6db7803-0937-4bf7-af15-8ccd85169a19",
-      "timestamp": "2025-09-21T01:25:20.101954",
-      "module": "monitor",
-      "class_name": "Fall",
-      "notification": true,
-      "image_path": "capture_d6db7803-0937-4bf7-af15-8ccd85169a19.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "health",
-        "alert_level": "critical"
-      }
-    },
-    {
-      "id": "b2c62d2c-6d18-403f-b03a-8b1bdaddc61f",
-      "timestamp": "2025-09-21T00:58:10.347464",
-      "module": "monitor",
-      "class_name": "Fall",
-      "notification": true,
-      "image_path": "capture_b2c62d2c-6d18-403f-b03a-8b1bdaddc61f.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "health",
-        "alert_level": "critical"
-      }
-    },
-    {
-      "id": "f097372d-acb4-4dc5-a0d1-038dd3612dcb",
-      "timestamp": "2025-09-21T00:57:38.490258",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_f097372d-acb4-4dc5-a0d1-038dd3612dcb.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "8f1d93c6-6234-413e-af8b-7c882388ead9",
-      "timestamp": "2025-09-21T00:51:23.499219",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_8f1d93c6-6234-413e-af8b-7c882388ead9.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "d6c3b99b-fd18-4fd6-b0e8-69464ff9a884",
-      "timestamp": "2025-09-21T00:51:08.440325",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_d6c3b99b-fd18-4fd6-b0e8-69464ff9a884.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "10e0cfde-202e-49f8-b686-8d009c89f159",
-      "timestamp": "2025-09-21T00:44:51.765421",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_10e0cfde-202e-49f8-b686-8d009c89f159.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "8d7f98a8-0f99-4e8e-8bcf-eb129f5aa5ac",
-      "timestamp": "2025-09-21T00:44:36.597721",
-      "module": "surveillance",
-      "class_name": "Motion",
-      "notification": true,
-      "image_path": "capture_8d7f98a8-0f99-4e8e-8bcf-eb129f5aa5ac.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "motion",
-        "alert_level": "low"
-      }
-    },
-    {
-      "id": "90a62e1b-7beb-4807-8ed1-75d0282d5339",
-      "timestamp": "2025-09-21T00:44:12.843782",
-      "module": "monitor",
-      "class_name": "Fall",
-      "notification": true,
-      "image_path": "capture_90a62e1b-7beb-4807-8ed1-75d0282d5339.jpg",
-      "description": "Description could not be generated.",
-      "metadata": {
-        "category": "health",
-        "alert_level": "critical"
       }
     }
   ]

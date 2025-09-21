@@ -12,6 +12,8 @@ from ultralytics import YOLO
 from dotenv import load_dotenv
 from twilio.rest import Client
 from services.fire_service import FireService
+from services.telegram_service import send_fire_alert, send_fall_alert
+import requests
 
 # --- Setup ---
 CWD=os.path.dirname(os.path.realpath(__file__))
@@ -27,6 +29,8 @@ class C:
     EVENTS_FILE = "events.json"
     # --- NEW: Image capture directory, relative to project root ---
     CAPTURES_DIR = "captured_images"
+    SAVE_SIZE = 320
+    FIRE_CONF_THRESHOLD = 0.70  # Higher threshold to reduce false positives
 
     CAM_WIDTH, CAM_HEIGHT = 640, 480
     INFERENCE_SIZE = 320
@@ -36,6 +40,7 @@ class C:
     MOTION_TRIGGER_SCAN_DURATION = 10
     MOTION_THRESHOLD = 30
     MOTION_MIN_AREA = 500
+    MOTION_COOLDOWN = 3.0  # 3 second cooldown between motion events
 
     # AI Model Files
     OBJECT_DETECTION_MODEL = "yolov8n.pt"
@@ -46,6 +51,8 @@ class C:
     TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
     TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
     RECIPIENT_NUMBER = os.getenv("RECIPIENT_NUMBER")
+    
+    # Telegram Configuration (now handled by TelegramService)
 
 # --- SMS Sending Function ---
 def send_emergency_message(message: str):
@@ -67,6 +74,8 @@ def send_emergency_message(message: str):
 
     threading.Thread(target=sender, daemon=True).start()
 
+# Telegram notifications now handled by TelegramService
+
 # --- Main Server Class ---
 class S:
     """The primary class that manages camera capture, processing, and the API."""
@@ -79,9 +88,12 @@ class S:
 
         self.mods = {"surveillance": False, "monitor": False, "fire": False}
         self._last_event = 0
+        self._last_motion_event = 0  # Track motion events separately
         self.fall_detected_time = None
         self.fall_alert_triggered = False
         self.motion_end_time = 0
+        
+        # Telegram notifications now handled by TelegramService
 
         self.od_model = None
         self.pose_model = None
@@ -168,7 +180,8 @@ class S:
         try:
             filename = f"capture_{event_id}.jpg"
             filepath = os.path.join(self.captures_path, filename)
-            cv2.imwrite(filepath, frame)
+            resized = cv2.resize(frame, (C.SAVE_SIZE, C.SAVE_SIZE))
+            cv2.imwrite(filepath, resized)
             log.info(f"📸 Image captured for event: {filename}")
             return filename
         except Exception as e:
@@ -213,7 +226,7 @@ class S:
             with self._frame_lock:
                 self.frame = processed_frame
     
-    # --- MODIFIED: surveillance_module now saves an image ---
+    # --- MODIFIED: surveillance_module now saves an image without drawing ---
     def _surveillance_module(self, processed_frame, original_frame, on_cooldown):
         fg_mask = self.bg_subtractor.apply(processed_frame)
         _, fg_mask = cv2.threshold(fg_mask, C.MOTION_THRESHOLD, 255, cv2.THRESH_BINARY)
@@ -222,10 +235,11 @@ class S:
 
         motion_detected = any(cv2.contourArea(c) > C.MOTION_MIN_AREA for c in contours)
         is_scanning = time.time() < self.motion_end_time
+        motion_cooldown = (time.time() - self._last_motion_event) < C.MOTION_COOLDOWN
 
-        if motion_detected and not is_scanning and not on_cooldown:
+        if motion_detected and not is_scanning and not motion_cooldown:
             self.motion_end_time = time.time() + C.MOTION_TRIGGER_SCAN_DURATION
-            self._last_event = time.time()
+            self._last_motion_event = time.time()
             event_id = str(uuid.uuid4())
             
             # Save image and get filename
@@ -235,19 +249,15 @@ class S:
                 "id": event_id,
                 "timestamp": datetime.datetime.now().isoformat(),
                 "module": "surveillance",
-                # FIX: Use class_name for consistency with frontend
                 "class_name": "Motion", 
                 "notification": True,
                 "image_path": image_filename,
-                "description": None, # Placeholder for AI worker
-                # NEW: Metadata for frontend filtering
+                "description": None,
                 "metadata": {"category": "motion", "alert_level": "low"}
             })
             is_scanning = True
 
-        if is_scanning:
-            cv2.putText(processed_frame, "AI SCANNING", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
-
+        # Return clean frame without any drawing overlays
         return processed_frame
     
     # --- MODIFIED: monitor_module now saves an image ---
@@ -305,7 +315,10 @@ class S:
                     "description": None,
                     "metadata": {"category": "health", "alert_level": "critical"}
                 })
-                send_emergency_message(f"HomePal Alert: FALL detected at {timestamp.strftime('%H:%M:%S')}.")
+                
+                # Send Telegram notification using the dedicated service
+                threading.Thread(target=send_fall_alert, args=(image_filename,), daemon=True).start()
+                log.warning(f"🚨 FALL DETECTED! Telegram notification queued. ID: {event_id}")
         else:
             self.fall_detected_time = None
             self.fall_alert_triggered = False
@@ -313,8 +326,9 @@ class S:
         return processed_frame
 
     def _fire_module(self, processed_frame, original_frame, on_cooldown):
-        vis, detected, confidence = self.fire_service.detect_fire(processed_frame)
-        if detected and not on_cooldown:
+        # Get detection results without visual overlays
+        _, detected, confidence = self.fire_service.detect_fire(processed_frame)
+        if detected and confidence >= C.FIRE_CONF_THRESHOLD and not on_cooldown:
             self._last_event = time.time()
             event_id = str(uuid.uuid4())
             image_filename = self._save_event_image(original_frame, event_id)
@@ -329,8 +343,13 @@ class S:
                 "description": None,
                 "metadata": {"category": "fire", "alert_level": "critical", "confidence": float(confidence)}
             })
+            
+            # Send Telegram notification using the dedicated service
+            threading.Thread(target=send_fire_alert, args=(confidence, image_filename), daemon=True).start()
+            log.warning(f"🔥 FIRE DETECTED! Telegram notification queued. Confidence: {confidence:.3f}")
 
-        return vis
+        # Return clean frame without any drawing overlays
+        return processed_frame
 
     def get_server_info(self):
         return {
