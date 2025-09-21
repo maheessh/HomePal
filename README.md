@@ -1,120 +1,149 @@
-# Aegis AI - Security Dashboard
+HomePal - AI-Powered Security & Care Dashboard
 
-A modern security dashboard with integrated camera streaming for home surveillance and personal monitoring.
+HomePal is more than a home security system—it’s a caring companion. Built with integrated camera streaming, AI monitoring, and personal wellness tracking, HomePal ensures the safety of your home and loved ones.
 
-## Features
+With motion detection, fall detection, and emergency SMS alerts, it provides real-time protection for children, elderly family members, and anyone who needs extra care. HomePal combines home safety with personal well-being, creating a smarter, safer living space.
 
-- **Dashboard**: Overview of all security systems
-- **Home Surveillance**: Live camera feed with activity monitoring
-- **Monitor Me**: Personal wellness tracking with camera integration
-- **Real-time Streaming**: MJPEG camera streams with live status indicators
-- **Responsive UI**: Clean, modern interface built with Tailwind CSS
+Our vision goes beyond emergencies—HomePal will evolve to track activity patterns, strengthen security, and use AI to bring peace of mind to every household.
 
-## Setup
+Features
 
-### Prerequisites
+Dashboard: Unified overview of all security and care systems
 
-- Python 3.8+
-- Web camera (for streaming functionality)
+Home Surveillance: Live camera feed with motion/activity monitoring
 
-### Installation
+Monitor Me: Personal wellness and fall detection with auto emergency alerts
 
-1. Clone the repository:
-```bash
+Real-time Streaming: MJPEG camera streams with live status indicators
+
+Responsive UI: Clean, modern interface built with Tailwind CSS
+
+Setup
+Prerequisites
+
+Python 3.8+
+
+Web camera (for streaming functionality)
+
+Installation
+
+Clone the repository:
+
 git clone <repository-url>
-cd Hackrice15
-```
+cd HomePal
 
-2. Create and activate a virtual environment:
-```bash
+
+Create and activate a virtual environment:
+
 python -m venv venv
 # On Windows:
 venv\Scripts\activate
 # On macOS/Linux:
 source venv/bin/activate
-```
 
-3. Install dependencies:
-```bash
+
+Install dependencies:
+
 pip install -r requirements.txt
-```
 
-### Running the Application
+Running the Application
 
-1. Start the main application:
-```bash
+Start the main application:
+
 python app.py
-```
+
 
 The application will:
-- Start the main dashboard on `http://localhost:5000`
-- Automatically start the camera server on `http://localhost:5001`
-- Provide camera streaming and API endpoints
 
-2. Open your browser and navigate to `http://localhost:5000`
+Launch the main dashboard at http://localhost:5000
 
-## Usage
+Start the camera server at http://localhost:5001
 
-### Dashboard
-- View system status overview
-- Navigate to different modules
+Enable live streaming and provide API endpoints
 
-### Home Surveillance
-- Toggle surveillance on/off using the switch
-- View live camera feed when activated
-- Monitor activity logs in real-time
+Open your browser and navigate to:
 
-### Monitor Me
-- Toggle personal monitoring on/off
-- View live camera feed for personal tracking
-- Track wellness metrics and alerts
+http://localhost:5000
 
-## API Endpoints
+Usage
+Dashboard
 
-- `GET /` - Main dashboard
-- `GET /stream` - Camera MJPEG stream
-- `POST /api/camera/start` - Start camera server
-- `POST /api/camera/stop` - Stop camera server
-- `GET /api/camera/status` - Get camera status
-- `GET /api/events/recent` - Get recent activity events
+View system health and security status
 
-## Architecture
+Navigate between modules seamlessly
 
-```
+Home Surveillance
+
+Toggle surveillance on/off
+
+Watch live camera feed in real time
+
+Review motion activity logs
+
+Monitor Me
+
+Toggle personal monitoring on/off
+
+Track wellness and detect falls or accidents
+
+Auto-send emergency SMS notifications when alerts trigger
+
+API Endpoints
+
+GET / → Main dashboard
+
+GET /stream → Camera MJPEG stream
+
+POST /api/camera/start → Start camera server
+
+POST /api/camera/stop → Stop camera server
+
+GET /api/camera/status → Get camera status
+
+GET /api/events/recent → Retrieve recent activity events
+
+Architecture
 app.py                 # Main Flask application with API endpoints
 camserve/
-  camserve.py         # Camera server with MJPEG streaming
+  camserve.py          # Camera server with MJPEG streaming
 templates/
-  index.html          # Frontend dashboard with Tailwind CSS
-```
+  index.html           # Frontend dashboard with Tailwind CSS
 
-## Testing
+Testing
 
 Run the integration test script to verify functionality:
-```bash
+
 python test_integration.py
-```
 
-## Troubleshooting
+Troubleshooting
+Camera Issues
 
-### Camera Issues
-- Ensure your camera is not being used by another application
-- Check that the camera server is running on port 5001
-- Verify camera permissions on your system
+Ensure your webcam is not used by another application
 
-### Port Conflicts
-- The main app runs on port 5000
-- The camera server runs on port 5001
-- Ensure these ports are available
+Verify the camera server is running on port 5001
 
-## Development
+Check system permissions for camera access
 
-The application follows a clean architecture pattern:
-- **Frontend**: HTML/CSS/JavaScript with Tailwind CSS
-- **Backend**: Flask with modular structure
-- **Camera Service**: Separate OpenCV-based streaming service
-- **API Layer**: RESTful endpoints for system control
+Port Conflicts
 
-## License
+Dashboard runs on port 5000
 
-© 2025 Aegis AI. All Rights Reserved.
+Camera server runs on port 5001
+
+Make sure both ports are free before starting the app
+
+Development
+
+HomePal follows a clean architecture pattern:
+
+Frontend: HTML/CSS/JavaScript with Tailwind CSS
+
+Backend: Flask modular API design
+
+Camera Service: OpenCV-powered MJPEG streaming
+
+API Layer: RESTful endpoints for monitoring and control
+
+License
+
+© 2025 HomePal. All Rights Reserved.
