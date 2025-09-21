@@ -11,6 +11,7 @@ from flask import Flask, Response, jsonify, request
 from ultralytics import YOLO
 from dotenv import load_dotenv
 from twilio.rest import Client
+from services.fire_service import FireService
 
 # --- Setup ---
 CWD=os.path.dirname(os.path.realpath(__file__))
@@ -76,7 +77,7 @@ class S:
         self._frame_lock = threading.Lock()
         self.frame = None
 
-        self.mods = {"surveillance": False, "monitor": False}
+        self.mods = {"surveillance": False, "monitor": False, "fire": False}
         self._last_event = 0
         self.fall_detected_time = None
         self.fall_alert_triggered = False
@@ -85,6 +86,7 @@ class S:
         self.od_model = None
         self.pose_model = None
         self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=300, varThreshold=50, detectShadows=False)
+        self.fire_service = FireService(model_dir=os.path.join(CWD, "packages", "inferno_ncnn_model"))
 
         # --- FIX: Ensure captures directory exists ---
         self.captures_path = os.path.join(CWD, C.CAPTURES_DIR)
@@ -120,6 +122,8 @@ class S:
             config_data = request.get_json(silent=True) or {}
             self.mods["surveillance"] = bool(config_data.get("surveillance", self.mods["surveillance"]))
             self.mods["monitor"] = bool(config_data.get("monitor", self.mods["monitor"]))
+            # Fire can be controlled independently; app may couple it to surveillance
+            self.mods["fire"] = bool(config_data.get("fire", self.mods["fire"]))
             log.info(f"Detection modules updated: {self.mods}")
             return jsonify({"success": True, "active_modules": self.mods})
 
@@ -203,6 +207,8 @@ class S:
                 processed_frame = self._monitor_module(processed_frame, frame, on_cooldown)
             if self.mods["surveillance"]:
                 processed_frame = self._surveillance_module(processed_frame, frame, on_cooldown)
+            if self.mods.get("fire"):
+                processed_frame = self._fire_module(processed_frame, frame, on_cooldown)
 
             with self._frame_lock:
                 self.frame = processed_frame
@@ -305,6 +311,26 @@ class S:
             self.fall_alert_triggered = False
             
         return processed_frame
+
+    def _fire_module(self, processed_frame, original_frame, on_cooldown):
+        vis, detected, confidence = self.fire_service.detect_fire(processed_frame)
+        if detected and not on_cooldown:
+            self._last_event = time.time()
+            event_id = str(uuid.uuid4())
+            image_filename = self._save_event_image(original_frame, event_id)
+
+            self._save_event_log({
+                "id": event_id,
+                "timestamp": datetime.datetime.now().isoformat(),
+                "module": "surveillance",
+                "class_name": "Fire",
+                "notification": True,
+                "image_path": image_filename,
+                "description": None,
+                "metadata": {"category": "fire", "alert_level": "critical", "confidence": float(confidence)}
+            })
+
+        return vis
 
     def get_server_info(self):
         return {

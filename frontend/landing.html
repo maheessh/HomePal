@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HomePal - Smart Home Security</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#4f46e5",
+              secondary: "#1f2937",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :root {
+        --c-bg: #F8F7F4;
+        --c-surface: #FFFFFF;
+        --c-border: #EAEAEA;
+        --c-text-primary: #1E1E1E;
+        --c-text-secondary: #6B7280;
+        --c-primary: #FF6B00;
+        --c-primary-hover: #E66000;
+      }
+      body { font-family: 'Inter', sans-serif; background-color: var(--c-bg); color: var(--c-text-primary); }
+      .card { background-color: var(--c-surface); border: 1px solid var(--c-border); border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); }
+      .nav-link { transition: all 0.2s ease-in-out; border-bottom: 2px solid transparent; padding-bottom: 4px; color: var(--c-text-secondary); }
+      .nav-link:hover { color: var(--c-primary); }
+      .nav-link.active { color: var(--c-primary); border-bottom-color: var(--c-primary); }
+      .nav-link-mobile { display: block; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 500; color: var(--c-text-secondary); transition: all 0.2s; }
+      .nav-link-mobile:hover { color: var(--c-primary); background-color: #F3F4F6; }
+    </style>
+  </head>
+  <body class="antialiased">
+    <div class="flex-grow">
+      <!-- Header -->
+      <header class="border-b border-black/10 sticky top-0 z-50 bg-white/80 backdrop-blur-md">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-center h-16">
+            <div class="flex items-center space-x-4">
+              <a href="/" class="flex items-center space-x-4 hover:opacity-80 transition-opacity duration-200">
+                <svg class="h-8 w-8 text-orange-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L2 9.42V21H22V9.42L12 2Z" fill="#FF9F43"/>
+                  <path d="M17.5 21V12.5C17.5 11.4 16.6 10.5 15.5 10.5H8.5C7.4 10.5 6.5 11.4 6.5 12.5V21" fill="#FFFFFF"/>
+                  <path d="M10 15.5C10 14.67 10.67 14 11.5 14H12.5C13.33 14 14 14.67 14 15.5V16C14 16.83 13.33 17.5 12.5 17.5H11.5C10.67 17.5 10 16.83 10 16V15.5Z" fill="#FF6B00"/>
+                </svg>
+                <h1 class="text-2xl font-bold text-gray-800">HomePal</h1>
+              </a>
+            </div>
+            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-500">
+              <a href="/dashboard" class="nav-link hover:text-orange-500">Dashboard</a>
+              <a href="/surveillance" class="nav-link hover:text-orange-500">Home Surveillance</a>
+              <a href="/monitor" class="nav-link hover:text-orange-500">Monitor Me</a>
+            </nav>
+            <div class="md:hidden">
+              <button id="mobile-menu-button" class="text-gray-300 hover:text-white focus:outline-none">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden">
+          <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <a href="/dashboard" class="nav-link-mobile">Dashboard</a>
+            <a href="/surveillance" class="nav-link-mobile">Home Surveillance</a>
+            <a href="/monitor" class="nav-link-mobile">Monitor Me</a>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Welcome Section -->
+        <div class="text-center py-16">
+          <h1 class="text-5xl font-bold text-gray-800 mb-6">Welcome to HomePal</h1>
+          <p class="text-xl text-gray-500 mb-8 max-w-2xl mx-auto">
+            Your intelligent home security and monitoring system powered by AI
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/dashboard" class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-medium transition-colors duration-200">
+              Go to Dashboard
+            </a>
+            <a href="/surveillance" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 px-8 py-3 rounded-lg font-medium transition-colors duration-200">
+              View Surveillance
+            </a>
+          </div>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+          <div class="card p-6 text-center">
+            <div class="bg-orange-50 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <svg class="h-8 w-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Live Surveillance</h3>
+            <p class="text-gray-500">Monitor your home with real-time camera feeds and AI-powered motion detection</p>
+          </div>
+
+          <div class="card p-6 text-center">
+            <div class="bg-orange-50 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <svg class="h-8 w-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Smart Monitoring</h3>
+            <p class="text-gray-500">AI-powered analysis of your daily activities and health monitoring</p>
+          </div>
+
+          <div class="card p-6 text-center">
+            <div class="bg-orange-50 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <svg class="h-8 w-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Medication Reminders</h3>
+            <p class="text-gray-500">Never miss a dose with intelligent medication scheduling and reminders</p>
+          </div>
+        </div>
+      </main>
+
+      <footer class="border-t border-black/10 mt-12">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
+          &copy; 2025 HomePal. All Rights Reserved.
+        </div>
+      </footer>
+    </div>
+
+    <!-- PragBase Scripts -->
+    <script>window.PragBaseConfig={
+        user_token:'9c6dc042-af47-4129-a9de-248287175ad7',
+        api_url:'https://pragbase.app'
+    };</script>
+    <script src="https://pragbase.app/static/js/widget/loader.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const mobileMenuButton = document.getElementById("mobile-menu-button");
+        const mobileMenu = document.getElementById("mobile-menu");
+
+        mobileMenuButton.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
+      });
+    </script>
+  </body>
+</html>

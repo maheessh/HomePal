@@ -70,7 +70,7 @@ except Exception as e:
     medication_service = None
 
 camera_process = None
-SYSTEM_STATE = {"surveillance": False, "monitor": False}
+SYSTEM_STATE = {"surveillance": False, "monitor": False, "fire": False}
 events_lock = threading.Lock()
 # NEW: Lock for medication file access
 meds_lock = threading.Lock()
@@ -180,7 +180,11 @@ def stop_camera_server():
 
 # --- Frontend & Camera Routes ---
 @app.route("/")
-def index():
+def landing():
+    return render_template("landing.html")
+
+@app.route("/dashboard")
+def dashboard():
     return render_template("index.html")
 
 @app.route("/surveillance")
@@ -222,6 +226,9 @@ def set_module_state():
         return jsonify({"success": False, "message": "Invalid module"}), 400
 
     SYSTEM_STATE[module] = bool(active)
+    # Ensure fire runs alongside surveillance from the single UI toggle
+    if module == "surveillance":
+        SYSTEM_STATE["fire"] = bool(active)
     print(f"📊 System state updated: {SYSTEM_STATE}")
 
     if any(SYSTEM_STATE.values()):
