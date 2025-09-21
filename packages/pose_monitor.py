@@ -21,7 +21,7 @@ class PoseService:
     """
     Handles pose detection, tracking, and activity analysis.
     """
-    def __init__(self, model_path="yolov8s-pose.pt"):
+    def __init__(self, model_path="yolo8npose_ncnn_model"):
         print("🛠️  Initializing Pose Service...")
         print(f"⌛ Loading model '{model_path}'. This might take a moment...")
         self.model = YOLO(model_path)

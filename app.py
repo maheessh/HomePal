@@ -23,7 +23,9 @@ from dotenv import load_dotenv
 from PIL import Image
 import google.generativeai as genai
 from services.openrouter_service import OpenRouterService
+from services.tts_service import TTSService
 from services.medication_service import MedicationReminderService
+from services.summary_service import SummaryService
 
 # --- Configuration ---
 load_dotenv()
@@ -33,6 +35,7 @@ EVENTS_FILE = "events.json"
 # NEW: Medications database file
 MEDICATIONS_FILE = "medications.json" 
 CAPTURES_DIR = "captured_images"
+TTS_DIR = "tts_audio"
 
 # --- Initialization ---
 app = Flask(__name__, template_folder="frontend", static_folder="captured_images")
@@ -52,6 +55,10 @@ try:
 except Exception as e:
     print(f"⚠️ OpenRouter configuration failed. Check your OPENROUTER_API_KEY. Error: {e}")
     openrouter_service = None
+
+# Configure TTS service
+tts_service = TTSService(output_dir=TTS_DIR)
+summary_service = SummaryService()
 
 # Configure Medication Reminder Service
 try:
@@ -196,6 +203,10 @@ def stream():
 def serve_captured_image(filename):
     return send_from_directory(os.path.join(CWD, CAPTURES_DIR), filename)
 
+@app.route('/tts/<path:filename>')
+def serve_tts_file(filename):
+    return send_from_directory(os.path.join(CWD, TTS_DIR), filename)
+
 
 # --- Central State Controller ---
 @app.route("/api/system/state", methods=["GET"])
@@ -251,19 +262,100 @@ def get_events():
 def get_event_summary():
     events = read_events_from_file()
     today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    events_today = sum(1 for e in events if datetime.fromisoformat(e.get("timestamp", "1970-01-01T00:00:00")) >= today_start)
-    
+    events_today = 0
+    for e in events:
+        try:
+            if datetime.fromisoformat(e.get("timestamp", "1970-01-01T00:00:00")) >= today_start:
+                events_today += 1
+        except Exception:
+            continue
+
+    def _fmt_time(dt: datetime) -> str:
+        try:
+            return dt.strftime('%-I:%M %p')
+        except ValueError:
+            # Windows fallback (no '-' flag support)
+            return dt.strftime('%I:%M %p').lstrip('0')
+
     last_event_time_str = "N/A"
     if events:
         try:
-            last_event_time_str = datetime.fromisoformat(events[0]["timestamp"]).strftime("%-I:%M %p")
-        except (ValueError, TypeError): last_event_time_str = "Invalid Date"
+            dt = datetime.fromisoformat(events[0].get("timestamp", ""))
+            last_event_time_str = _fmt_time(dt)
+        except Exception:
+            last_event_time_str = "N/A"
 
     return jsonify({"success": True, "summary": {
         "total_events": len(events),
         "events_today": events_today,
         "last_event_time": last_event_time_str,
     }})
+
+@app.route("/api/generate_audio_briefing", methods=["POST"])
+def generate_audio_briefing():
+    """Generate a one-sentence briefing and return an audio URL for gTTS output."""
+    try:
+        events = read_events_from_file()
+
+        # Default fallback sentence if AI unavailable or no events
+        fallback_sentence = "All quiet at home with no concerning activity."
+        if events:
+            try:
+                # Simple human fallback if AI missing
+                latest = events[0]
+                module = latest.get("module", "system")
+                cls = latest.get("class_name", "activity")
+                fallback_sentence = f"Latest update: {module} detected {cls.lower()}."
+            except Exception:
+                pass
+
+        sentence = fallback_sentence
+        model_used = "fallback"
+
+        if openrouter_service:
+            result = openrouter_service.generate_micro_briefing(events)
+            if result.get("success"):
+                sentence = result.get("sentence", sentence)
+                model_used = result.get("model_used", "google/gemini-2.0-flash-001")
+            else:
+                model_used = f"fallback ({result.get('error', 'ai_error')})"
+
+        # Synthesize audio
+        filename, _ = tts_service.synthesize_to_file(sentence)
+        audio_url = f"/tts/{filename}"
+
+        return jsonify({
+            "success": True,
+            "sentence": sentence,
+            "audio_url": audio_url,
+            "model_used": model_used
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/generate_audio_rundown", methods=["POST"])
+def generate_audio_rundown():
+    """Generate a spoken quick rundown: counts, times, upcoming meds."""
+    try:
+        events = read_events_from_file()
+        meds = read_meds_file()
+
+        # Craft rundown text
+        text = summary_service.craft_rundown(events, meds)
+
+        # Synthesize audio
+        filename, _ = tts_service.synthesize_to_file(text)
+        audio_url = f"/tts/{filename}"
+
+        return jsonify({
+            "success": True,
+            "sentence": text,
+            "audio_url": audio_url,
+            "model_used": "summary_service+gtts"
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/events/clear", methods=["POST"])
 def clear_events():

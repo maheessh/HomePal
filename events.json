@@ -1,6 +1,19 @@
 {
   "events": [
     {
+      "id": "f0fc62d5-ab13-4d83-a3aa-26e97c54089c",
+      "timestamp": "2025-09-21T03:16:17.558091",
+      "module": "monitor",
+      "class_name": "Fall",
+      "notification": true,
+      "image_path": "capture_f0fc62d5-ab13-4d83-a3aa-26e97c54089c.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "health",
+        "alert_level": "critical"
+      }
+    },
+    {
       "id": "0f301d73-3133-4159-84e1-d163714cf38a",
       "timestamp": "2025-09-21T01:54:30.515721",
       "module": "surveillance",

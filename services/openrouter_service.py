@@ -72,6 +72,47 @@ Focus on insights that would be valuable for a homeowner managing their security
                 "error": str(e),
                 "model_used": self.model
             }
+
+    def generate_micro_briefing(self, events_data: list) -> Dict[str, Any]:
+        """Generate a SINGLE short, speech-friendly sentence summarizing events.
+
+        Constraints:
+        - 6 to 14 words total
+        - Clear, natural speech
+        - Present tense, calm tone
+        - No list formatting, no markdown, no emojis
+        - End with a period
+        """
+        system_prompt = (
+            "You are a safety narrator. Compose exactly one concise sentence (6-14 words) "
+            "that summarizes the provided home security events for a spoken briefing. "
+            "Keep it calm, reassuring, and inclusive. No lists, no bullets, no headings, "
+            "no emojis, no extra whitespace. End with a period."
+        )
+
+        events_summary = self._format_events_for_prompt(events_data)
+        user_query = (
+            "Generate one short sentence for a spoken briefing about these events.\n\n"
+            f"{events_summary}\n\n"
+            "One sentence only."
+        )
+
+        try:
+            response = self._make_api_request(user_query, system_prompt)
+            raw = response.get("choices", [{}])[0].get("message", {}).get("content", "")
+            sentence = (raw or "").strip().replace("\n", " ")
+            # Post-process to enforce single short sentence
+            if sentence:
+                # If model returns multiple sentences, take the first
+                sentence = sentence.split(".")[0].strip()
+                if sentence:
+                    sentence += "."
+            if not sentence:
+                sentence = "All quiet at home with no concerning activity."
+
+            return {"success": True, "sentence": sentence, "model_used": self.model}
+        except Exception as e:
+            return {"success": False, "error": str(e), "model_used": self.model}
     
     def _format_events_for_prompt(self, events_data: list) -> str:
         """Format events data into a readable string for the AI prompt."""
