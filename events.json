@@ -1,6 +1,110 @@
 {
   "events": [
     {
+      "id": "1314480a-81ee-42ee-8a87-61292f1d65aa",
+      "timestamp": "2025-09-21T02:35:15.440277",
+      "module": "monitor",
+      "class_name": "Fall",
+      "notification": true,
+      "image_path": "capture_1314480a-81ee-42ee-8a87-61292f1d65aa.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "health",
+        "alert_level": "critical"
+      }
+    },
+    {
+      "id": "0296ec24-abe8-430c-8398-82ff5f858e86",
+      "timestamp": "2025-09-21T02:30:37.523666",
+      "module": "monitor",
+      "class_name": "Fall",
+      "notification": true,
+      "image_path": "capture_0296ec24-abe8-430c-8398-82ff5f858e86.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "health",
+        "alert_level": "critical"
+      }
+    },
+    {
+      "id": "74533344-43dc-4f5f-ad61-022d347f697b",
+      "timestamp": "2025-09-21T02:29:59.801118",
+      "module": "monitor",
+      "class_name": "Fall",
+      "notification": true,
+      "image_path": "capture_74533344-43dc-4f5f-ad61-022d347f697b.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "health",
+        "alert_level": "critical"
+      }
+    },
+    {
+      "id": "bfcaddfe-e536-4bf3-a4ef-bea72488512c",
+      "timestamp": "2025-09-21T01:34:36.218764",
+      "module": "monitor",
+      "class_name": "Fall",
+      "notification": true,
+      "image_path": "capture_bfcaddfe-e536-4bf3-a4ef-bea72488512c.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "health",
+        "alert_level": "critical"
+      }
+    },
+    {
+      "id": "8fe8a7b2-02f5-43ef-9655-5c152d843100",
+      "timestamp": "2025-09-21T01:26:30.172023",
+      "module": "monitor",
+      "class_name": "Fall",
+      "notification": true,
+      "image_path": "capture_8fe8a7b2-02f5-43ef-9655-5c152d843100.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "health",
+        "alert_level": "critical"
+      }
+    },
+    {
+      "id": "8d567592-9da8-4c60-8464-1ff646c57bd1",
+      "timestamp": "2025-09-21T01:25:06.958508",
+      "module": "surveillance",
+      "class_name": "Motion",
+      "notification": true,
+      "image_path": "capture_8d567592-9da8-4c60-8464-1ff646c57bd1.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "motion",
+        "alert_level": "low"
+      }
+    },
+    {
+      "id": "91fe2408-5cd3-4bff-adb2-87925ea2da4f",
+      "timestamp": "2025-09-21T01:24:50.582383",
+      "module": "surveillance",
+      "class_name": "Motion",
+      "notification": true,
+      "image_path": "capture_91fe2408-5cd3-4bff-adb2-87925ea2da4f.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "motion",
+        "alert_level": "low"
+      }
+    },
+    {
+      "id": "e9b0743f-eb88-4dd8-9b6c-d2d19ebbd0d5",
+      "timestamp": "2025-09-21T01:20:19.437254",
+      "module": "monitor",
+      "class_name": "Fall",
+      "notification": true,
+      "image_path": "capture_e9b0743f-eb88-4dd8-9b6c-d2d19ebbd0d5.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "health",
+        "alert_level": "critical"
+      }
+    },
+    {
       "id": "b2c62d2c-6d18-403f-b03a-8b1bdaddc61f",
       "timestamp": "2025-09-21T00:58:10.347464",
       "module": "monitor",

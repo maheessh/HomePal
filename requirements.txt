@@ -25,3 +25,4 @@ google-generativeai==0.3.2
 tensorflow==2.13.0
 mtcnn==0.1.1
 retina-face==0.0.13
+requests
