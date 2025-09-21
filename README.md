@@ -1,12 +1,4 @@
-# HomePal - AI-Powered Security & Care Dashboard (Code scaffold)
 
-This document contains a top-to-bottom, code-first scaffold for **HomePal**: README, key Python files, a minimal frontend template, requirements, and a simple integration test. Use this as a starting point for development.
-
----
-
-## README.md
-
-````markdown
 # HomePal
 
 AI-Powered Security & Care Dashboard
@@ -31,6 +23,7 @@ HomePal combines camera streaming, AI monitoring, and personal wellness tracking
 git clone <repository-url>
 cd HomePal
 python -m venv venv
+
 # activate venv
 # Windows: venv\Scripts\activate
 # macOS/Linux: source venv/bin/activate
