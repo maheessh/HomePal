@@ -248,18 +248,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const updateEventFeed = (events) => {
         const container = document.getElementById("global-event-feed");
-        if (events.length === 0) {
-            container.innerHTML = `<p class="text-gray-400 text-center py-8">No events recorded yet.</p>`;
+        
+        // Filter events to only show those with images
+        const eventsWithImages = events.filter(event => event.image_path);
+        
+        if (eventsWithImages.length === 0) {
+            container.innerHTML = `<p class="text-gray-400 text-center py-8">No events with images recorded yet.</p>`;
             latestEventId = null;
             return;
         }
 
-        if (events[0].id === latestEventId) return;
+        if (eventsWithImages[0].id === latestEventId) return;
 
-        latestEventId = events[0].id;
+        latestEventId = eventsWithImages[0].id;
         container.innerHTML = '';
         
-        events.forEach(event => {
+        eventsWithImages.forEach(event => {
             const time = new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const isCritical = event.metadata?.alert_level === 'critical';
             const isMonitor = event.module === 'monitor';
@@ -281,42 +285,88 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
     
-    // --- Gemini Briefing ---
+    // --- OpenRouter Briefing ---
     const generateSecurityBriefing = async () => {
         const briefingContainer = document.getElementById("briefing-container");
         const resultContainer = document.getElementById("briefing-result-container");
+        const generateBtn = document.getElementById("generate-briefing-btn");
+        
+        // Update UI to show loading state
         briefingContainer.classList.add('hidden');
         resultContainer.classList.remove('hidden');
-        resultContainer.innerHTML = `<div class="flex items-center space-x-3"><div class="spinner h-5 w-5 rounded-full border-2 border-t-orange-500 border-gray-200"></div><p class="text-gray-500">Generating report...</p></div>`;
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = `
+            <div class="flex items-center justify-center space-x-2">
+                <div class="spinner h-4 w-4 rounded-full border-2 border-t-white border-gray-300"></div>
+                <span>Generating...</span>
+            </div>
+        `;
+        
+        resultContainer.innerHTML = `
+            <div class="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+                <div class="spinner h-5 w-5 rounded-full border-2 border-t-orange-500 border-gray-200"></div>
+                <div>
+                    <p class="text-gray-700 font-medium">Generating AI Security Briefing</p>
+                    <p class="text-sm text-gray-500">Analyzing events with Gemini 2.0 Flash 001...</p>
+                </div>
+            </div>
+        `;
 
         try {
-            const response = await fetch("/api/events");
-            const data = await response.json();
-            
-            if (!data.success || data.events.length === 0) {
-                resultContainer.innerHTML = `<p class="text-amber-600">No events found to generate a briefing.</p>`;
-                return;
-            }
-            
-            const formattedEvents = data.events.map(e => ` - Event: '${e.class_name}' at ${new Date(e.timestamp).toLocaleTimeString()}`).join('\n');
-            const userQuery = `Summarize these security events from my home monitoring system:\n${formattedEvents}\n\nHighlight critical incidents and note the busiest time of day. Act as a professional security analyst.`;
-            const systemPrompt = "You are a helpful security analyst AI. Provide clear, concise summaries of security events for a homeowner. Use markdown for formatting, making key phrases bold.";
-
             const apiResponse = await fetch('/api/generate_briefing', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_query: userQuery, system_prompt: systemPrompt })
+                headers: { 'Content-Type': 'application/json' }
             });
 
-            if (!apiResponse.ok) throw new Error('Failed to get response from AI.');
-
             const result = await apiResponse.json();
-            resultContainer.innerHTML = result.briefing
-                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-orange-600">$1</strong>')
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to generate briefing');
+            }
+
+            // Format the briefing response with proper styling
+            const formattedBriefing = result.briefing
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-orange-600 font-semibold">$1</strong>')
+                .replace(/### (.*?)/g, '<h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">$1</h3>')
+                .replace(/## (.*?)/g, '<h2 class="text-xl font-bold text-gray-900 mt-6 mb-3 border-b border-gray-200 pb-1">$1</h2>')
+                .replace(/\* (.*?)/g, '<li class="ml-4 mb-1">• $1</li>')
+                .replace(/\n\n/g, '</p><p class="mb-3">')
                 .replace(/\n/g, '<br>');
+            
+            resultContainer.innerHTML = `
+                <div class="prose prose-sm max-w-none">
+                    <div class="flex items-center justify-between mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="text-green-800 font-medium">Briefing Generated Successfully</span>
+                        </div>
+                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">${result.model_used || 'google/gemini-2.0-flash-001'}</span>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-lg p-4">
+                        <p class="mb-3">${formattedBriefing}</p>
+                    </div>
+                </div>
+            `;
+            
         } catch (error) {
             console.error("Error generating briefing:", error);
-            resultContainer.innerHTML = `<p class="text-red-500">Failed to generate briefing.</p>`;
+            resultContainer.innerHTML = `
+                <div class="flex items-center space-x-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <svg class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <p class="text-red-800 font-medium">Failed to Generate Briefing</p>
+                        <p class="text-sm text-red-600">${error.message}</p>
+                    </div>
+                </div>
+            `;
+        } finally {
+            // Reset button state
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = 'Generate Briefing';
         }
     };
 

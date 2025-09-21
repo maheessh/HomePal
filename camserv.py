@@ -29,7 +29,7 @@ class C:
 
     CAM_WIDTH, CAM_HEIGHT = 640, 480
     INFERENCE_SIZE = 320
-    EVENT_COOLDOWN = 15
+    EVENT_COOLDOWN = 0  # No cooldown - log events immediately
 
     # Motion Detection Parameters
     MOTION_TRIGGER_SCAN_DURATION = 10

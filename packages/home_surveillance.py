@@ -32,7 +32,7 @@ class HomeSurveillance:
         self.is_running = False
         self.last_fire_log = 0
         self.last_motion_log = 0
-        self.log_cooldown = 5  # seconds between same type logs
+        self.log_cooldown = 0  # No cooldown - log events immediately
         
     def start(self):
         """Start the surveillance system"""

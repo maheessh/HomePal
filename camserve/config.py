@@ -9,7 +9,7 @@ class Config:
 
     # Motion detection
     MOTION_THRESHOLD = 5000
-    EVENT_COOLDOWN = 5  # seconds
+    EVENT_COOLDOWN = 0  # No cooldown - log events immediately
 
     # Paths (you can adjust if needed)
     OBJECT_DETECTION_MODEL = os.path.join("models", "yolov8n.pt")

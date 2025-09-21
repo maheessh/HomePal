@@ -25,3 +25,10 @@ google-generativeai==0.3.2
 tensorflow==2.13.0
 mtcnn==0.1.1
 retina-face==0.0.13
+
+# SMS notifications
+twilio==8.10.0
+
+# Text-to-Speech for medication reminders
+gtts==2.4.0
+pygame==2.5.2

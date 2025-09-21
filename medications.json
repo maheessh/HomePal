@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "dosage": "1 tablet",
+    "times": "08:00 AM, 08:00 PM",
+    "name": "Test Medication",
+    "id": "5094bc6c-d274-4fb8-af5a-048420f924cc"
+  }
+]

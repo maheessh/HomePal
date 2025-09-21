@@ -230,16 +230,19 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const updateActivityTimeline = (events) => {
-        if (!events || events.length === 0) {
-            timelineContainer.innerHTML = `<p class="text-gray-400 text-center py-8">No recent activity detected.</p>`;
+        // Filter events to only show those with images
+        const eventsWithImages = events ? events.filter(event => event.image_path) : [];
+        
+        if (eventsWithImages.length === 0) {
+            timelineContainer.innerHTML = `<p class="text-gray-400 text-center py-8">No recent activity with images detected.</p>`;
             return;
         }
 
-        if (events[0].id === latestEventId) return; // No new events
-        latestEventId = events[0].id;
+        if (eventsWithImages[0].id === latestEventId) return; // No new events
+        latestEventId = eventsWithImages[0].id;
 
         timelineContainer.innerHTML = '';
-        events.forEach(event => {
+        eventsWithImages.forEach(event => {
             const time = new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const icon = `<svg class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`;
             
@@ -256,21 +259,22 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const renderEventGallery = (events) => {
-        if (!events || events.length === 0) {
-            galleryContainer.innerHTML = `<div class="col-span-full text-center py-12"><p class="text-gray-500">No captured events to display.</p></div>`;
+        // Filter events to only show those with images
+        const eventsWithImages = events ? events.filter(event => event.image_path) : [];
+        
+        if (eventsWithImages.length === 0) {
+            galleryContainer.innerHTML = `<div class="col-span-full text-center py-12"><p class="text-gray-500">No captured events with images to display.</p></div>`;
             return;
         }
-        galleryContainer.innerHTML = events.map(event => {
+        galleryContainer.innerHTML = eventsWithImages.map(event => {
             const time = new Date(event.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
             const imagePath = event.image_path ? `/captured_images/${event.image_path}` : 'https://placehold.co/600x400/e0e0e0/757575?text=No+Image';
-            const description = event.description === null ? '<i class="text-gray-400">Analyzing...</i>' : (event.description || '<i class="text-gray-400">N/A</i>');
             return `
             <div class="card overflow-hidden">
                 <img src="${imagePath}" alt="Event capture" class="w-full h-40 object-cover"/>
                 <div class="p-4">
                     <p class="font-semibold text-gray-800">${event.class_name}</p>
-                    <p class="text-xs text-gray-500 mb-2">${time}</p>
-                    <p class="text-sm text-gray-600"><span class="font-medium text-orange-600">AI:</span> ${description}</p>
+                    <p class="text-xs text-gray-500">${time}</p>
                 </div>
             </div>`;
         }).join('');

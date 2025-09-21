@@ -165,6 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let systemState = { monitor: false };
     let latestEventId = null;
     let pollingInterval = null;
+    let isUserInteractingWithForm = false;
 
     const toggle = document.getElementById("monitor-toggle");
     const statusText = document.querySelector(".status-text");
@@ -253,16 +254,19 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const updateActivityTimeline = (events) => {
-        if (!events || events.length === 0) {
-            sidePanes.timeline.innerHTML = `<p class="text-gray-400 text-center py-8">No recent activity detected.</p>`;
+        // Filter events to only show those with images
+        const eventsWithImages = events ? events.filter(event => event.image_path) : [];
+        
+        if (eventsWithImages.length === 0) {
+            sidePanes.timeline.innerHTML = `<p class="text-gray-400 text-center py-8">No recent activity with images detected.</p>`;
             return;
         }
 
-        if (events[0].id === latestEventId) return; // No new events
-        latestEventId = events[0].id;
+        if (eventsWithImages[0].id === latestEventId) return; // No new events
+        latestEventId = eventsWithImages[0].id;
 
         sidePanes.timeline.innerHTML = '';
-        events.forEach(event => {
+        eventsWithImages.forEach(event => {
             const time = new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const isAlert = event.metadata?.alert_level === 'critical';
             const iconColor = isAlert ? 'text-red-500' : 'text-orange-500';
@@ -284,21 +288,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const renderEventGallery = (events) => {
         const gallery = contentPanes.events;
-        if (!events || events.length === 0) {
-            gallery.innerHTML = `<div class="col-span-full text-center py-12"><p class="text-gray-500">No captured events to display.</p></div>`;
+        
+        // Filter events to only show those with images
+        const eventsWithImages = events ? events.filter(event => event.image_path) : [];
+        
+        if (eventsWithImages.length === 0) {
+            gallery.innerHTML = `<div class="col-span-full text-center py-12"><p class="text-gray-500">No captured events with images to display.</p></div>`;
             return;
         }
-        gallery.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${events.map(event => {
+        gallery.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${eventsWithImages.map(event => {
             const time = new Date(event.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
             const imagePath = event.image_path ? `/captured_images/${event.image_path}` : 'https://placehold.co/600x400/e0e0e0/757575?text=No+Image';
-            const description = event.description === null ? '<i class="text-gray-400">Analyzing...</i>' : (event.description || '<i class="text-gray-400">N/A</i>');
             return `
             <div class="card overflow-hidden">
                 <img src="${imagePath}" alt="Event capture" class="w-full h-40 object-cover"/>
                 <div class="p-4">
                     <p class="font-semibold text-gray-800">${event.class_name}</p>
-                    <p class="text-xs text-gray-500 mb-2">${time}</p>
-                    <p class="text-sm text-gray-600"><span class="font-medium text-orange-600">AI:</span> ${description}</p>
+                    <p class="text-xs text-gray-500">${time}</p>
                 </div>
             </div>`;
         }).join('')}</div>`;
@@ -323,6 +329,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const renderMedicationsPane = (medications) => {
+        // Don't re-render if user is interacting with the form
+        if (isUserInteractingWithForm) {
+            console.log('Skipping medication pane re-render - user is interacting with form');
+            return;
+        }
+
         const container = contentPanes.meds;
         const listHtml = (!medications || medications.length === 0)
             ? `<p class="text-gray-500 text-center py-4">No medications added yet.</p>`
@@ -355,35 +367,194 @@ document.addEventListener("DOMContentLoaded", () => {
                             <input type="text" id="med-dosage" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500">
                         </div>
                         <div>
-                            <label for="med-times" class="block text-sm font-medium text-gray-700 mb-1">Times</label>
-                            <input type="text" id="med-times" required placeholder="e.g., 8:00 AM, 8:00 PM" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Reminder Times</label>
+                            <div id="time-inputs-container" class="space-y-2">
+                                <div class="flex items-center space-x-2">
+                                    <input type="time" class="time-input border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500" required>
+                                    <button type="button" class="remove-time-btn text-red-500 hover:text-red-700 px-2" style="display: none;">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" id="add-time-btn" class="mt-2 text-sm text-orange-600 hover:text-orange-700 font-medium">
+                                + Add another time
+                            </button>
                         </div>
                         <button type="submit" class="w-full text-center bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">Add Medication</button>
                     </form>
+                    
+                    <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h6 class="font-medium text-blue-800 mb-2">Test Announcement</h6>
+                        <p class="text-sm text-blue-600 mb-3">Test the TTS announcement system</p>
+                        <button id="test-announcement-btn" class="w-full text-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            🔊 Test Announcement
+                        </button>
+                    </div>
                 </div>
             </div>`;
 
-        // Re-add event listeners since we rewrote the HTML
-        document.getElementById('add-med-form').addEventListener('submit', handleAddMed);
-        document.querySelectorAll('.delete-med-btn').forEach(btn => btn.addEventListener('click', handleDeleteMed));
+        // Setup the form after rendering
+        setupMedicationsForm();
+    };
+
+    const setupMedicationsForm = () => {
+        // Setup form submission
+        const form = document.getElementById('add-med-form');
+        if (form) {
+            // Remove any existing listeners to prevent duplicates
+            form.removeEventListener('submit', handleAddMed);
+            form.addEventListener('submit', handleAddMed);
+        }
+        
+        // Setup delete buttons
+        document.querySelectorAll('.delete-med-btn').forEach(btn => {
+            btn.removeEventListener('click', handleDeleteMed);
+            btn.addEventListener('click', handleDeleteMed);
+        });
+        
+        // Setup time input management
+        setupTimeInputs();
+        
+        // Setup test announcement button
+        const testBtn = document.getElementById('test-announcement-btn');
+        if (testBtn) {
+            testBtn.removeEventListener('click', handleTestAnnouncement);
+            testBtn.addEventListener('click', handleTestAnnouncement);
+        }
+        
+        // Track user interaction with form inputs
+        const formInputs = document.querySelectorAll('#add-med-form input, #add-med-form button');
+        formInputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                isUserInteractingWithForm = true;
+                console.log('User started interacting with form');
+            });
+            
+            input.addEventListener('blur', () => {
+                // Delay resetting the flag to allow for normal form interactions
+                setTimeout(() => {
+                    if (!document.activeElement || !document.activeElement.closest('#add-med-form')) {
+                        isUserInteractingWithForm = false;
+                        console.log('User stopped interacting with form');
+                    }
+                }, 1000);
+            });
+        });
+    };
+
+    const setupTimeInputs = () => {
+        const container = document.getElementById('time-inputs-container');
+        const addBtn = document.getElementById('add-time-btn');
+        
+        console.log('Setting up time inputs:', { container: !!container, addBtn: !!addBtn });
+        
+        if (!container || !addBtn) {
+            console.log('Missing elements for time inputs setup');
+            return;
+        }
+        
+        // Add time input event listeners
+        addBtn.addEventListener('click', () => {
+            const timeInputDiv = document.createElement('div');
+            timeInputDiv.className = 'flex items-center space-x-2';
+            timeInputDiv.innerHTML = `
+                <input type="time" class="time-input border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500" required>
+                <button type="button" class="remove-time-btn text-red-500 hover:text-red-700 px-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            `;
+            container.appendChild(timeInputDiv);
+            updateRemoveButtons();
+        });
+        
+        // Update remove button visibility
+        const updateRemoveButtons = () => {
+            const timeInputs = container.querySelectorAll('.time-input');
+            const removeBtns = container.querySelectorAll('.remove-time-btn');
+            removeBtns.forEach((btn, index) => {
+                btn.style.display = timeInputs.length > 1 ? 'block' : 'none';
+                btn.onclick = () => {
+                    btn.parentElement.remove();
+                    updateRemoveButtons();
+                };
+            });
+        };
+        
+        updateRemoveButtons();
     };
 
     const handleAddMed = async (e) => {
         e.preventDefault();
+        console.log('Form submitted!');
+        
+        // Collect all time inputs
+        const timeInputs = document.querySelectorAll('.time-input');
+        console.log('Found time inputs:', timeInputs.length);
+        
+        const times = Array.from(timeInputs).map(input => {
+            const timeValue = input.value;
+            console.log('Time value:', timeValue);
+            if (!timeValue) return null;
+            
+            // Convert 24h format to 12h format for storage
+            const [hours, minutes] = timeValue.split(':');
+            const hour24 = parseInt(hours);
+            const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+            const ampm = hour24 >= 12 ? 'PM' : 'AM';
+            return `${hour12}:${minutes.padStart(2, '0')} ${ampm}`;
+        }).filter(time => time !== null);
+        
+        console.log('Processed times:', times);
+        
+        if (times.length === 0) {
+            alert('Please add at least one reminder time.');
+            return;
+        }
+        
         const newMed = {
             name: document.getElementById('med-name').value,
             dosage: document.getElementById('med-dosage').value,
-            times: document.getElementById('med-times').value,
+            times: times.join(', '),
         };
+        
+        console.log('Sending medication:', newMed);
+        
         try {
-            await fetch('/api/medications', {
+            const response = await fetch('/api/medications', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newMed),
             });
-            e.target.reset();
-            fetchAllData(); // Refresh all data
-        } catch (error) { console.error("Failed to add medication:", error); }
+            
+            if (response.ok) {
+                console.log('Medication added successfully!');
+                e.target.reset();
+                // Reset time inputs to just one
+                const container = document.getElementById('time-inputs-container');
+                container.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <input type="time" class="time-input border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500" required>
+                        <button type="button" class="remove-time-btn text-red-500 hover:text-red-700 px-2" style="display: none;">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                setupTimeInputs();
+                isUserInteractingWithForm = false; // Reset interaction flag
+                fetchAllData(); // Refresh all data
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+        } catch (error) { 
+            console.error("Failed to add medication:", error);
+            alert('Failed to add medication. Please try again.');
+        }
     };
 
     const handleDeleteMed = async (e) => {
@@ -397,6 +568,53 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    const handleTestAnnouncement = async () => {
+        const testBtn = document.getElementById('test-announcement-btn');
+        const originalText = testBtn.textContent;
+        
+        try {
+            testBtn.disabled = true;
+            testBtn.innerHTML = '<div class="flex items-center justify-center space-x-2"><div class="spinner h-4 w-4 rounded-full border-2 border-t-white border-blue-300"></div><span>Testing...</span></div>';
+            
+            const response = await fetch('/api/medications/test-announcement', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: 'Test Medication',
+                    dosage: '1 tablet'
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                testBtn.textContent = '✅ Test Complete';
+                testBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                testBtn.classList.add('bg-green-500');
+                setTimeout(() => {
+                    testBtn.textContent = originalText;
+                    testBtn.disabled = false;
+                    testBtn.classList.remove('bg-green-500');
+                    testBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                }, 2000);
+            } else {
+                throw new Error(result.error || 'Test failed');
+            }
+            
+        } catch (error) {
+            console.error("Test announcement failed:", error);
+            testBtn.textContent = '❌ Test Failed';
+            testBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+            testBtn.classList.add('bg-red-500');
+            setTimeout(() => {
+                testBtn.textContent = originalText;
+                testBtn.disabled = false;
+                testBtn.classList.remove('bg-red-500');
+                testBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+            }, 2000);
+        }
+    };
+
     // --- EVENT LISTENERS & INITIALIZATION ---
     toggle.addEventListener("change", (e) => setModuleState(e.target.checked));
 
@@ -407,6 +625,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const tabId = tab.id.replace('tab-', '');
             Object.values(contentPanes).forEach(pane => pane.classList.add('hidden'));
             contentPanes[tabId].classList.remove('hidden');
+            
+            // If medications tab is clicked, ensure form is properly set up
+            if (tabId === 'meds') {
+                setTimeout(() => {
+                    setupMedicationsForm();
+                }, 100);
+            }
         });
     });
 

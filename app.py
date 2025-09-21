@@ -22,6 +22,8 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from PIL import Image
 import google.generativeai as genai
+from services.openrouter_service import OpenRouterService
+from services.medication_service import MedicationReminderService
 
 # --- Configuration ---
 load_dotenv()
@@ -42,6 +44,23 @@ try:
     print("✅ Gemini AI configured successfully.")
 except Exception as e:
     print(f"⚠️ Gemini configuration failed. Check your GOOGLE_API_KEY. Error: {e}")
+
+# Configure OpenRouter
+try:
+    openrouter_service = OpenRouterService()
+    print("✅ OpenRouter service configured successfully.")
+except Exception as e:
+    print(f"⚠️ OpenRouter configuration failed. Check your OPENROUTER_API_KEY. Error: {e}")
+    openrouter_service = None
+
+# Configure Medication Reminder Service
+try:
+    medication_service = MedicationReminderService(MEDICATIONS_FILE)
+    medication_service.start()
+    print("✅ Medication reminder service configured successfully.")
+except Exception as e:
+    print(f"⚠️ Medication reminder service configuration failed. Error: {e}")
+    medication_service = None
 
 camera_process = None
 SYSTEM_STATE = {"surveillance": False, "monitor": False}
@@ -257,26 +276,47 @@ def clear_events():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-# --- SECURE GEMINI BRIEFING PROXY ---
+# --- OPENROUTER BRIEFING ENDPOINT ---
 @app.route("/api/generate_briefing", methods=["POST"])
 def generate_briefing_proxy():
-    data = request.get_json()
-    user_query = data.get("user_query")
-    system_prompt = data.get("system_prompt")
+    """Generate AI briefing using OpenRouter's Gemini 2.0 Flash model."""
+    if not openrouter_service:
+        return jsonify({
+            "success": False, 
+            "error": "OpenRouter service not configured. Please check your OPENROUTER_API_KEY."
+        }), 500
     
-    if not user_query or not system_prompt:
-        return jsonify({"success": False, "error": "Missing query or prompt"}), 400
-        
     try:
-        model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
-            system_instruction=system_prompt
-        )
-        response = model.generate_content(user_query)
-        return jsonify({"success": True, "briefing": response.text})
+        # Get all events from the system
+        events = read_events_from_file()
+        
+        if not events:
+            return jsonify({
+                "success": False,
+                "error": "No events found to generate briefing from."
+            }), 400
+        
+        # Generate briefing using OpenRouter service
+        result = openrouter_service.generate_briefing(events)
+        
+        if result["success"]:
+            return jsonify({
+                "success": True, 
+                "briefing": result["briefing"],
+                "model_used": result.get("model_used", "unknown")
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": f"OpenRouter API error: {result.get('error', 'Unknown error')}"
+            }), 500
+            
     except Exception as e:
-        print(f"❌ Gemini briefing failed: {e}")
-        return jsonify({"success": False, "error": f"AI generation failed: {e}"}), 500
+        print(f"❌ OpenRouter briefing failed: {e}")
+        return jsonify({
+            "success": False, 
+            "error": f"Briefing generation failed: {str(e)}"
+        }), 500
 
 
 # --- NEW: Medication Management API ---
@@ -338,6 +378,27 @@ def get_reminders():
     upcoming.sort(key=lambda x: x['reminder_time'])
     return jsonify({'reminders': upcoming})
 
+@app.route('/api/medications/test-announcement', methods=['POST'])
+def test_medication_announcement():
+    """Test TTS announcement for medication reminders"""
+    if not medication_service:
+        return jsonify({'success': False, 'error': 'Medication service not available'}), 500
+    
+    try:
+        data = request.get_json() or {}
+        medication_name = data.get('name', 'Test Medication')
+        dosage = data.get('dosage', '1 tablet')
+        
+        success = medication_service.test_announcement(medication_name, dosage)
+        
+        if success:
+            return jsonify({'success': True, 'message': 'Test announcement played successfully'})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to play announcement'}), 500
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 # --- Main Entrypoint ---
 if __name__ == "__main__":
@@ -349,3 +410,5 @@ if __name__ == "__main__":
     finally:
         print("\n🛑 Shutting down application...")
         stop_camera_server()
+        if medication_service:
+            medication_service.stop()
