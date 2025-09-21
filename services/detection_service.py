@@ -1,260 +1,192 @@
-#!/usr/bin/env python3
-"""
-Detection Service for Home Surveillance
-Handles fire detection, smoke detection, and motion detection using AI models
-"""
-
-import cv2
-import numpy as np
-import json
+# services/detection_service.py
 import os
-import sys
-from datetime import datetime
-import threading
+import time
+from collections import deque
+import numpy as np
+import cv2
 
-# Add packages to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'packages'))
-
-# Import the centralized event logger
+# Try to import YOLO (ultralytics). If present, we use it as a model-based detector.
 try:
-    from .event_logger import event_logger
-except ImportError:
-    from event_logger import event_logger
+    from ultralytics import YOLO
+    _YOLO_AVAILABLE = True
+except Exception:
+    _YOLO_AVAILABLE = False
 
 class DetectionService:
-    """Service for home surveillance detection tasks"""
-    
-    def __init__(self, model_path="packages/inferno_ncnn_model"):
-        self.model_path = model_path
-        self.inferno_model = None
-        self.events_lock = threading.Lock()
-        self.events_file = "events.json"
-        self.captures_dir = "captured_images"
-        self._initialize_model()
-        self._ensure_directories()
-        
-        # Smoke detection parameters
-        self.smoke_history = []
-        self.smoke_threshold = 0.3  # Threshold for smoke detection
-    
-    def _ensure_directories(self):
-        """Ensure required directories exist"""
-        if not os.path.exists(self.captures_dir):
-            os.makedirs(self.captures_dir)
-    
-    def _initialize_model(self):
-        """Initialize the NCNN model"""
+    """
+    DetectionService provides:
+      - detect_fire(frame) -> (mask, found_bool, confidence)
+      - detect_smoke(frame) -> (mask, found_bool, confidence)
+
+    It will try to load a model path if provided, otherwise fallback to color+motion heuristics.
+    It keeps short-term history to reduce false positives.
+    """
+    def __init__(self, fire_model_path=None, smoke_model_path=None,
+                 smoothing_window=5, min_fire_area=500, min_smoke_area=800):
+        self.fire_model_path = fire_model_path
+        self.smoke_model_path = smoke_model_path
+        self.smoothing_window = smoothing_window
+        self.min_fire_area = min_fire_area
+        self.min_smoke_area = min_smoke_area
+
+        # Temporal smoothing queues (store booleans)
+        self._fire_history = deque(maxlen=smoothing_window)
+        self._smoke_history = deque(maxlen=smoothing_window)
+
+        # Try to load model(s) if path provided and ultralytics is installed
+        self._fire_model = None
+        self._smoke_model = None
+        if _YOLO_AVAILABLE:
+            try:
+                if fire_model_path and os.path.exists(fire_model_path):
+                    self._fire_model = YOLO(fire_model_path)
+            except Exception:
+                self._fire_model = None
+            try:
+                if smoke_model_path and os.path.exists(smoke_model_path):
+                    self._smoke_model = YOLO(smoke_model_path)
+            except Exception:
+                self._smoke_model = None
+
+    # -----------------------
+    # Utility helpers
+    # -----------------------
+    def _temporal_decision(self, history, current_bool, required=3):
+        """Push current_bool into history and decide if event should be considered real."""
+        history.append(bool(current_bool))
+        return sum(history) >= required  # e.g., >=3 true in last N frames
+
+    # -----------------------
+    # Color-based fire detection (fast fallback)
+    # -----------------------
+    def _color_fire_detect(self, frame):
+        """Return mask, found_bool, confidence_estimate"""
+        # Convert to HSV
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        # Flame colors: H roughly 0-50 (red->yellow), S high, V high
+        lower = np.array([0, 100, 150], dtype=np.uint8)
+        upper = np.array([50, 255, 255], dtype=np.uint8)
+        mask = cv2.inRange(hsv, lower, upper)
+
+        # Morphological cleanup
+        mask = cv2.medianBlur(mask, 5)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=1)
+
+        # Filter by contour area
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        large_areas = [cv2.contourArea(c) for c in contours if cv2.contourArea(c) >= self.min_fire_area]
+        found = len(large_areas) > 0
+        conf = 0.0
+        if found:
+            # confidence ~ normalized area of largest contour over frame area (0..1)
+            max_area = max(large_areas)
+            conf = min(1.0, max_area / (frame.shape[0] * frame.shape[1]) * 5.0)  # scale factor
+        return mask, found, float(conf)
+
+    # -----------------------
+    # Smoke detection heuristic (fallback)
+    # -----------------------
+    def _color_smoke_detect(self, frame):
+        """
+        Smoke tends to be low-contrast, desaturated, grayish blobs.
+        We'll detect regions with low saturation but significant texture / edge activity.
+        """
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        v = hsv[:, :, 2]
+        s = hsv[:, :, 1]
+
+        # Candidate pixels: low saturation, not too dark or too bright
+        sat_thresh = 60
+        v_low, v_high = 50, 220
+        candidate = ((s < sat_thresh) & (v > v_low) & (v < v_high)).astype('uint8') * 255
+
+        # Enhance edges inside candidate region (smoke has soft edges; use Laplacian)
+        edges = cv2.Laplacian(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), cv2.CV_8U)
+        _, edges_bin = cv2.threshold(edges, 25, 255, cv2.THRESH_BINARY)
+        mask = cv2.bitwise_and(candidate, edges_bin)
+
+        # Clean up and check area
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=1)
+
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        large_areas = [cv2.contourArea(c) for c in contours if cv2.contourArea(c) >= self.min_smoke_area]
+        found = len(large_areas) > 0
+        conf = 0.0
+        if found:
+            conf = min(1.0, max(large_areas) / (frame.shape[0] * frame.shape[1]) * 3.0)
+        return mask, found, float(conf)
+
+    # -----------------------
+    # Model-based wrapper (if YOLO/NCNN model available)
+    # -----------------------
+    def _model_detect(self, model, frame, class_name='fire', conf_threshold=0.3):
+        """
+        Run YOLO model on frame (resized as needed) and return mask + found + avg_conf.
+        Assumes model's res.names contains class names including 'fire'/'smoke' as applicable.
+        """
+        if model is None:
+            return None, False, 0.0
         try:
-            # Import the model class
-            import importlib.util
-            model_file = os.path.join(self.model_path, "model_ncnn.py")
-            spec = importlib.util.spec_from_file_location("model_ncnn", model_file)
-            model_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(model_module)
-            
-            self.inferno_model = model_module.InfernoNCNNModel(self.model_path)
-            print(f"✅ Inferno NCNN model loaded from {self.model_path}")
-        except Exception as e:
-            print(f"❌ Failed to load Inferno NCNN model: {e}")
-            self.inferno_model = None
-    
+            # Run inference (model will handle resizing)
+            results = model(frame, verbose=False)
+            # Aggregate boxes where class matches
+            confs = []
+            mask = np.zeros(frame.shape[:2], dtype=np.uint8)
+            for res in results:
+                if getattr(res, 'boxes', None) is None:
+                    continue
+                for box in res.boxes:
+                    cls_idx = int(box.cls[0])
+                    name = res.names.get(cls_idx, str(cls_idx))
+                    if class_name.lower() in name.lower():
+                        conf = float(box.conf[0].cpu().item()) if hasattr(box.conf, 'cpu') else float(box.conf[0])
+                        confs.append(conf)
+                        xyxy = box.xyxy[0].cpu().numpy() if hasattr(box.xyxy, 'cpu') else np.array(box.xyxy[0])
+                        x1, y1, x2, y2 = [int(v) for v in xyxy]
+                        cv2.rectangle(mask, (x1, y1), (x2, y2), 255, -1)
+            found = len(confs) > 0
+            avg_conf = float(np.mean(confs)) if confs else 0.0
+            return mask, found, avg_conf
+        except Exception:
+            return None, False, 0.0
+
+    # -----------------------
+    # Public API
+    # -----------------------
     def detect_fire(self, frame):
         """
-        Detect fire in the frame using Inferno NCNN model
-        Returns: (processed_frame, fire_detected, confidence)
+        Returns: (mask, found_bool, confidence)
+        - mask: binary mask (H x W) or None
+        - found_bool: bool
+        - confidence: float 0..1 estimate
         """
-        if self.inferno_model is None:
-            return frame, False, 0.0
-        
-        try:
-            processed_frame = frame.copy()
-            
-            # Use the Inferno model to detect fire
-            fire_detected, fire_confidence = self.inferno_model.is_fire_detected(frame)
-            
-            # Draw fire detection result
-            if fire_detected:
-                cv2.rectangle(processed_frame, (10, 10), (300, 60), (0, 0, 255), -1)
-                cv2.putText(processed_frame, f"FIRE DETECTED! {fire_confidence:.2f}", 
-                          (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
-            else:
-                cv2.putText(processed_frame, f"Fire Confidence: {fire_confidence:.2f}", 
-                          (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-            
-            return processed_frame, fire_detected, fire_confidence
-                
-        except Exception as e:
-            print(f"❌ Fire detection error: {e}")
-            return frame, False, 0.0
-    
+        # 1) Prefer model if available
+        if self._fire_model is not None:
+            mask, found, conf = self._model_detect(self._fire_model, frame, class_name='fire', conf_threshold=0.25)
+            if mask is None:
+                # fallback to color
+                mask, found, conf = self._color_fire_detect(frame)
+        else:
+            mask, found, conf = self._color_fire_detect(frame)
+
+        # Temporal smoothing: only return True if detection persists across several frames
+        final_decision = self._temporal_decision(self._fire_history, found, required=max(1, self.smoothing_window//2))
+        # Amplify confidence slightly if temporal consensus is met
+        if final_decision and conf < 0.9:
+            conf = min(1.0, conf + 0.2)
+        return mask, bool(final_decision), float(conf)
+
     def detect_smoke(self, frame):
-        """
-        Detect smoke in the frame using computer vision techniques
-        Returns: (processed_frame, smoke_detected, confidence)
-        """
-        try:
-            processed_frame = frame.copy()
-            
-            # Convert to HSV for better color analysis
-            hsv = cv2.cvtColor(processed_frame, cv2.COLOR_BGR2HSV)
-            
-            # Define smoke color range (grayish colors)
-            # Smoke typically appears as white/gray with some transparency
-            lower_smoke = np.array([0, 0, 100])    # Lower bound for smoke
-            upper_smoke = np.array([180, 30, 255]) # Upper bound for smoke
-            
-            # Create mask for smoke colors
-            smoke_mask = cv2.inRange(hsv, lower_smoke, upper_smoke)
-            
-            # Apply morphological operations to clean up the mask
-            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-            smoke_mask = cv2.morphologyEx(smoke_mask, cv2.MORPH_CLOSE, kernel)
-            smoke_mask = cv2.morphologyEx(smoke_mask, cv2.MORPH_OPEN, kernel)
-            
-            # Find contours
-            contours, _ = cv2.findContours(smoke_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
-            smoke_detected = False
-            smoke_confidence = 0.0
-            smoke_areas = []
-            
-            # Analyze contours for smoke-like characteristics
-            for contour in contours:
-                area = cv2.contourArea(contour)
-                if area > 500:  # Minimum area threshold
-                    # Calculate contour properties
-                    x, y, w, h = cv2.boundingRect(contour)
-                    aspect_ratio = w / h if h > 0 else 0
-                    
-                    # Smoke typically has irregular shapes and varying density
-                    # Calculate density variation in the region
-                    roi = processed_frame[y:y+h, x:x+w]
-                    if roi.size > 0:
-                        gray_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-                        density_std = np.std(gray_roi)
-                        
-                        # Smoke characteristics: irregular shape, varying density
-                        if 0.3 < aspect_ratio < 3.0 and density_std > 20:
-                            smoke_areas.append((x, y, w, h))
-                            
-                            # Draw smoke detection rectangle
-                            cv2.rectangle(processed_frame, (x, y), (x + w, y + h), (0, 165, 255), 2)
-                            
-                            # Calculate confidence based on area and characteristics
-                            confidence = min(1.0, area / 10000.0)  # Normalize by area
-                            smoke_confidence = max(smoke_confidence, confidence)
-            
-            # Smoke is detected if we have significant areas with high confidence
-            if len(smoke_areas) > 0 and smoke_confidence > self.smoke_threshold:
-                smoke_detected = True
-                
-                # Update smoke history for temporal consistency
-                self.smoke_history.append(smoke_confidence)
-                if len(self.smoke_history) > 10:
-                    self.smoke_history.pop(0)
-                
-                # Use average confidence over recent frames for stability
-                avg_confidence = np.mean(self.smoke_history)
-                if avg_confidence > self.smoke_threshold:
-                    cv2.rectangle(processed_frame, (10, 70), (350, 110), (0, 165, 255), -1)
-                    cv2.putText(processed_frame, f"SMOKE DETECTED! {avg_confidence:.2f}", 
-                              (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
-                else:
-                    smoke_detected = False
-            else:
-                # Clear smoke history if no smoke detected
-                if len(self.smoke_history) > 0:
-                    self.smoke_history.pop(0)
-            
-            # Add smoke status text
-            status_color = (0, 165, 255) if smoke_detected else (255, 255, 255)
-            status_text = f"Smoke: {'DETECTED' if smoke_detected else 'CLEAR'}"
-            cv2.putText(processed_frame, status_text, (10, 50), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, status_color, 2)
-            
-            return processed_frame, smoke_detected, smoke_confidence
-            
-        except Exception as e:
-            print(f"❌ Smoke detection error: {e}")
-            return frame, False, 0.0
-    
-    def detect_motion(self, frame, background_subtractor):
-        """
-        Detect motion in the frame using background subtraction
-        Returns: (processed_frame, motion_detected)
-        """
-        try:
-            processed_frame = frame.copy()
-            
-            # Apply background subtractor
-            fg_mask = background_subtractor.apply(processed_frame)
-            
-            # Clean up the mask
-            fg_mask = cv2.threshold(fg_mask, 200, 255, cv2.THRESH_BINARY)[1]
-            fg_mask = cv2.dilate(fg_mask, None, iterations=2)
-            
-            # Find contours
-            contours, _ = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
-            motion_detected = False
-            motion_areas = []
-            
-            for contour in contours:
-                if cv2.contourArea(contour) < 1000:
-                    continue
-                
-                motion_detected = True
-                x, y, w, h = cv2.boundingRect(contour)
-                motion_areas.append((x, y, w, h))
-                
-                # Draw motion rectangle
-                cv2.rectangle(processed_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            
-            # Add motion status text
-            status_color = (0, 255, 0) if motion_detected else (255, 255, 255)
-            status_text = f"Motion: {'DETECTED' if motion_detected else 'CLEAR'}"
-            cv2.putText(processed_frame, status_text, (10, processed_frame.shape[0] - 20), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, status_color, 2)
-            
-            return processed_frame, motion_detected, motion_areas
-            
-        except Exception as e:
-            print(f"❌ Motion detection error: {e}")
-            return frame, False, []
-    
-    def log_event(self, event_type, confidence=None, motion_areas=None, image_path=None):
-        """Log detection event using centralized EventLogger"""
-        try:
-            if event_type.lower().startswith("fire"):
-                return event_logger.log_fire_event(confidence or 0.0, image_path)
-            elif event_type.lower().startswith("smoke"):
-                return event_logger.log_smoke_event(confidence or 0.0, image_path)
-            elif event_type.lower().startswith("motion"):
-                return event_logger.log_motion_event(motion_areas or [], confidence, image_path)
-            elif event_type.lower().startswith("person"):
-                return event_logger.log_person_event(confidence or 0.0, image_path)
-            else:
-                # Generic event logging
-                return event_logger.log_event(
-                    event_type=event_type,
-                    module="surveillance",
-                    confidence=confidence,
-                    image_path=image_path,
-                    metadata={"motion_areas": motion_areas} if motion_areas else None
-                )
-        except Exception as e:
-            print(f"❌ Failed to log event: {e}")
-            return ""
-    
-    def save_frame(self, frame, event_type):
-        """Save frame as image for event logging"""
-        try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{event_type}_{timestamp}.jpg"
-            filepath = os.path.join(self.captures_dir, filename)
-            
-            cv2.imwrite(filepath, frame)
-            return filename
-        except Exception as e:
-            print(f"❌ Failed to save frame: {e}")
-            return None
+        if self._smoke_model is not None:
+            mask, found, conf = self._model_detect(self._smoke_model, frame, class_name='smoke', conf_threshold=0.25)
+            if mask is None:
+                mask, found, conf = self._color_smoke_detect(frame)
+        else:
+            mask, found, conf = self._color_smoke_detect(frame)
+
+        final_decision = self._temporal_decision(self._smoke_history, found, required=max(1, self.smoothing_window//2))
+        if final_decision and conf < 0.9:
+            conf = min(1.0, conf + 0.15)
+        return mask, bool(final_decision), float(conf)

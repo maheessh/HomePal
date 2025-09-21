@@ -1,435 +1,430 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aegis AI - Monitor Me</title>
+    <title>HomePal - Monitor Me</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <style>
-      body {
-        font-family: "Inter", sans-serif;
-        background-color: #0d0d0d;
-      }
-      body::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 400px;
-        background: radial-gradient(
-          circle at top,
-          rgba(76, 59, 171, 0.1),
-          transparent 70%
-        );
-        z-index: 0;
-        pointer-events: none;
-      }
-      .main-content {
-        position: relative;
-        z-index: 1;
-      }
-      .toggle-checkbox:checked {
-        right: 0;
-        border-color: #4a5568;
-      }
-      .toggle-checkbox:checked + .toggle-label {
-        background-color: #5a67d8;
-      }
-      .card {
-        background-color: rgba(23, 23, 23, 0.6);
-        border: 1px solid #2d2d2d;
-        backdrop-filter: blur(10px);
-        transition: all 0.3s ease-in-out;
-        box-shadow: 0 0 15px rgba(76, 59, 171, 0.05);
-      }
-      .card:hover {
-        border-color: #4c3bab;
-      }
-      .nav-link {
-        transition: all 0.2s ease-in-out;
-        border-bottom: 2px solid transparent;
-      }
-      .nav-link.active {
-        color: #fff;
-        border-bottom-color: #5a67d8;
-      }
-      .activity-log,
-      .video-container {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.7s ease-in-out, opacity 0.5s ease-in-out,
-          margin-top 0.5s ease-in-out;
-        opacity: 0;
-        margin-top: 0;
-      }
-      .activity-log.active,
-      .video-container.active {
-        max-height: 1000px;
-        opacity: 1;
-        margin-top: 1.5rem;
-      }
-      .tab-button {
-        transition: all 0.2s ease;
-        border-bottom: 2px solid transparent;
-        padding-bottom: 0.5rem;
-      }
-      .tab-button.active {
-        color: #818cf8;
-        border-color: #818cf8;
-      }
-      /* Loading Spinner Animation */
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-      .spinner {
-        animation: spin 1s linear infinite;
-      }
+        :root {
+            --c-bg: #F8F7F4; /* Warm off-white */
+            --c-surface: #FFFFFF;
+            --c-border: #EAEAEA;
+            --c-text-primary: #1E1E1E; /* Dark charcoal */
+            --c-text-secondary: #6B7280;
+            --c-primary: #FF6B00; /* Bright Orange from logo */
+            --c-primary-hover: #E66000;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--c-bg);
+            color: var(--c-text-primary);
+        }
+        .card {
+            background-color: var(--c-surface);
+            border: 1px solid var(--c-border);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+            border-bottom: 2px solid transparent;
+            padding-bottom: 4px;
+        }
+        .nav-link.active {
+            color: var(--c-primary);
+            border-bottom-color: var(--c-primary);
+        }
+        .tab-button {
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+            padding-bottom: 0.5rem;
+            color: var(--c-text-secondary);
+        }
+        .tab-button.active {
+            color: var(--c-primary);
+            border-color: var(--c-primary);
+        }
+        .toggle-bg:after {
+            content: '';
+            @apply absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-all shadow-sm;
+        }
+        input:checked + .toggle-bg:after {
+            @apply transform translate-x-full;
+        }
+        input:checked + .toggle-bg {
+            background-color: var(--c-primary);
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { animation: spin 1s linear infinite; }
     </style>
-  </head>
-  <body class="text-gray-300">
+</head>
+<body class="antialiased">
     <div class="main-content flex flex-col min-h-screen">
-      <!-- Header -->
-      <header class="border-b border-gray-800/50 sticky top-0 z-50 backdrop-blur-md">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex items-center justify-between h-16">
-            <div class="flex items-center space-x-3">
-              <svg class="h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              <h1 class="text-2xl font-bold text-white">Aegis AI</h1>
-            </div>
-            <nav class="hidden md:flex items-center space-x-8">
-              <a href="/" class="nav-link">Dashboard</a>
-              <a href="/surveillance" class="nav-link">Home Surveillance</a>
-              <a href="/monitor" class="nav-link active">Monitor Me</a>
-            </nav>
-            <div class="md:hidden">
-              <button id="mobile-menu-button" class="text-gray-300 hover:text-white focus:outline-none">
-                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-        <div id="mobile-menu" class="hidden md:hidden">
-          <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">Dashboard</a>
-            <a href="/surveillance" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">Home Surveillance</a>
-            <a href="/monitor" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-gray-900">Monitor Me</a>
-          </div>
-        </div>
-      </header>
-
-      <!-- Main Content -->
-      <main class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
-        <div class="card p-6 lg:p-8 max-w-4xl mx-auto">
-          <div class="flex justify-between items-start mb-6">
-            <div>
-              <h3 class="text-xl font-semibold text-white">Monitor Me</h3>
-              <p class="text-gray-400 mt-2 text-sm">
-                Personal wellness tracking and automated alerts.
-              </p>
-            </div>
-            <div class="flex items-center space-x-2">
-              <span class="text-sm font-medium text-gray-400 status-text">Off</span>
-              <div class="relative inline-block w-10 align-middle select-none">
-                <input type="checkbox" name="toggle" id="monitor-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" data-system="monitor"/>
-                <label for="monitor-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer"></label>
-              </div>
-            </div>
-          </div>
-          
-          <div class="border-b border-gray-700 mb-4">
-            <nav class="flex space-x-6" aria-label="Tabs">
-              <button id="tab-live" class="tab-button active text-sm font-medium">Live Feed</button>
-              <button id="tab-events" class="tab-button text-sm font-medium">Captured Events</button>
-            </nav>
-          </div>
-
-          <div id="active-content-container">
-            <div id="video-container" class="video-container">
-              <div class="relative bg-black rounded-lg overflow-hidden aspect-video">
-                <!-- Camera Loading Placeholder -->
-                <div id="camera-loader" class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-lg z-10">
-                    <div class="spinner h-8 w-8 rounded-full border-4 border-t-indigo-500 border-gray-600"></div>
-                    <p class="mt-3 text-sm text-gray-400">Initializing Camera...</p>
+        <!-- Header -->
+        <header class="border-b border-black/10 sticky top-0 z-50 bg-white/80 backdrop-blur-md">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center space-x-3">
+                        <!-- HomePal Logo SVG -->
+                        <svg class="h-8 w-8 text-orange-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 9.42V21H22V9.42L12 2Z" fill="#FF9F43"/>
+                            <path d="M17.5 21V12.5C17.5 11.4 16.6 10.5 15.5 10.5H8.5C7.4 10.5 6.5 11.4 6.5 12.5V21" fill="#FFFFFF"/>
+                            <path d="M10 15.5C10 14.67 10.67 14 11.5 14H12.5C13.33 14 14 14.67 14 15.5V16C14 16.83 13.33 17.5 12.5 17.5H11.5C10.67 17.5 10 16.83 10 16V15.5Z" fill="#FF6B00"/>
+                        </svg>
+                        <h1 class="text-2xl font-bold text-gray-800">HomePal</h1>
+                    </div>
+                    <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-500">
+                        <a href="/" class="nav-link hover:text-orange-500">Dashboard</a>
+                        <a href="/surveillance" class="nav-link hover:text-orange-500">Surveillance</a>
+                        <a href="/monitor" class="nav-link active">Monitor Me</a>
+                    </nav>
                 </div>
-                <img id="cameraStream" src="" alt="Monitor Camera Stream" class="w-full h-auto hidden"/>
-              </div>
             </div>
-            
-            <div id="monitor-analysis" class="activity-log bg-black/20 p-6 mt-6 rounded-md">
-              <h4 class="font-semibold text-xl text-white mb-6">Last 24 Hours - Personal Activity Analysis</h4>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <!-- IMPROVED Summary Card UI -->
-                <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700 flex items-center space-x-4">
-                  <div class="bg-indigo-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M12 6v6l4 2"></path></svg></div>
-                  <div>
-                    <p id="summary-active-time" class="text-2xl font-bold text-white">--</p>
-                    <p class="text-sm text-gray-400">Est. Active Time</p>
-                  </div>
-                </div>
-                <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700 flex items-center space-x-4">
-                  <div class="bg-indigo-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg></div>
-                  <div>
-                    <p id="summary-activity-episodes" class="text-2xl font-bold text-white">--</p>
-                    <p class="text-sm text-gray-400">Total Events</p>
-                  </div>
-                </div>
-                <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700 flex items-center space-x-4">
-                   <div class="bg-red-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
-                  <div>
-                    <p id="summary-major-events" class="text-2xl font-bold text-white">--</p>
-                    <p class="text-sm text-gray-400">Major Events</p>
-                  </div>
-                </div>
-              </div>
+        </header>
 
-              <div>
-                <h5 class="font-medium text-lg text-white mb-3">Recent Activity</h5>
-                <div id="monitor-timeline" class="space-y-3 h-96 overflow-y-auto pr-2"></div>
-              </div>
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column: Video Feed and Event Gallery -->
+                <div class="lg:col-span-2">
+                    <div class="card p-6">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-800">Monitor Me</h2>
+                                <p class="text-gray-500 mt-1">Personal wellness and activity tracking.</p>
+                            </div>
+                            <div class="flex items-center space-x-3 mt-4 sm:mt-0">
+                                <span class="text-sm font-medium text-gray-500 status-text">Fetching...</span>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" id="monitor-toggle" class="sr-only" data-system="monitor">
+                                    <div class="relative toggle-bg bg-gray-200 w-11 h-6 rounded-full"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="border-b border-gray-200 mb-6">
+                            <nav class="flex space-x-6" aria-label="Tabs">
+                                <button id="tab-live" class="tab-button active font-medium">Live Feed</button>
+                                <button id="tab-events" class="tab-button font-medium">Captured Events</button>
+                                <button id="tab-meds" class="tab-button font-medium">Medications</button>
+                            </nav>
+                        </div>
+
+                        <!-- Tab Content Area -->
+                        <div id="content-container">
+                            <!-- Live Feed Content -->
+                            <div id="live-content-container">
+                                <div class="relative bg-black rounded-lg overflow-hidden aspect-video">
+                                    <div id="camera-loader" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 text-white rounded-lg z-10">
+                                        <div class="spinner h-8 w-8 rounded-full border-4 border-t-orange-500 border-gray-600"></div>
+                                        <p class="mt-3 text-sm">Initializing Camera...</p>
+                                    </div>
+                                    <img id="cameraStream" src="" alt="Monitor Camera Stream" class="w-full h-auto hidden"/>
+                                </div>
+                            </div>
+                            <!-- Event Gallery Content -->
+                            <div id="event-gallery-container" class="hidden">
+                                <div id="event-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                            </div>
+                            <!-- Medications Content -->
+                            <div id="meds-container" class="hidden">
+                                <!-- Medication content will be injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Live Activity and Meds -->
+                <div class="lg:col-span-1 flex flex-col gap-8">
+                     <div class="card p-6">
+                        <h3 class="text-xl font-semibold mb-4">Live Activity</h3>
+                        <div id="monitor-timeline" class="space-y-3 h-96 overflow-y-auto pr-2">
+                             <p class="text-gray-400 text-center py-8">Waiting for activity...</p>
+                        </div>
+                    </div>
+                     <div class="card p-6">
+                        <div id="meds-widget-container">
+                             <!-- Medication widget content will be injected here -->
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-
-          <div id="event-gallery-container" class="hidden">
-             <div id="event-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-          </div>
-        </div>
-      </main>
-
-      <footer class="border-t border-gray-800/50 mt-12">
-        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
-          &copy; 2025 Aegis AI. All Rights Reserved.
-        </div>
-      </footer>
+        </main>
     </div>
 
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const MODULE_NAME = "monitor";
-        const toggle = document.getElementById("monitor-toggle");
-        const statusText = document.querySelector(".status-text");
-        const mobileMenuButton = document.getElementById("mobile-menu-button");
-        const mobileMenu = document.getElementById("mobile-menu");
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // --- STATE & ELEMENTS ---
+    const MODULE_NAME = "monitor";
+    let systemState = { monitor: false };
+    let latestEventId = null;
+    let pollingInterval = null;
 
-        const activeContentContainer = document.getElementById("active-content-container");
-        const videoContainer = document.getElementById("video-container");
-        const cameraLoader = document.getElementById("camera-loader");
-        const cameraStream = document.getElementById("cameraStream");
-        const logContainer = document.getElementById("monitor-analysis");
-        const timelineContainer = document.getElementById("monitor-timeline");
-        const activeTimeEl = document.getElementById("summary-active-time");
-        const activityEpisodesEl = document.getElementById("summary-activity-episodes");
-        const majorEventsEl = document.getElementById("summary-major-events");
+    const toggle = document.getElementById("monitor-toggle");
+    const statusText = document.querySelector(".status-text");
+    const cameraLoader = document.getElementById("camera-loader");
+    const cameraStream = document.getElementById("cameraStream");
+    const tabs = document.querySelectorAll(".tab-button");
 
-        const galleryContainer = document.getElementById("event-gallery-container");
-        const gallery = document.getElementById("event-gallery");
+    const contentPanes = {
+        live: document.getElementById("live-content-container"),
+        events: document.getElementById("event-gallery-container"),
+        meds: document.getElementById("meds-container")
+    };
+    
+    const sidePanes = {
+        timeline: document.getElementById('monitor-timeline'),
+        medsWidget: document.getElementById('meds-widget-container')
+    };
 
-        const tabLive = document.getElementById("tab-live");
-        const tabEvents = document.getElementById("tab-events");
+    // --- CORE LOGIC ---
+    const fetchAllData = async () => {
+        try {
+            const [stateRes, eventsRes, medsRes, remindersRes] = await Promise.all([
+                fetch("/api/system/state"),
+                fetch(`/api/events?module=${MODULE_NAME}`),
+                fetch('/api/medications'),
+                fetch('/api/medications/reminders')
+            ]);
+            const stateData = await stateRes.json();
+            const eventsData = await eventsRes.json();
+            const medsData = await medsRes.json();
+            const remindersData = await remindersRes.json();
 
-        let livePollingInterval = null;
-        let galleryPollingInterval = null;
+            if (stateData.success) {
+                systemState = stateData.state;
+                updateControlUI();
+            }
+            if (eventsData.success) {
+                updateActivityTimeline(eventsData.events);
+                renderEventGallery(eventsData.events); // Also update gallery data
+            }
+            if (medsData) {
+                renderMedicationsPane(medsData);
+                renderMedsWidget(medsData, remindersData.reminders || []);
+            }
 
-        const setModuleState = async (active) => {
-          try {
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            statusText.textContent = "Offline";
+            statusText.classList.add('text-red-500');
+        }
+    };
+
+    const setModuleState = async (active) => {
+        toggle.disabled = true;
+        statusText.textContent = active ? "Activating..." : "Deactivating...";
+        try {
             await fetch("/api/module/state", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ module: MODULE_NAME, active }),
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ module: MODULE_NAME, active }),
             });
-          } catch (error) {
-            console.error(`Error setting state for ${MODULE_NAME}:`, error);
-          }
-        };
+            // Let the next poll confirm and update the UI
+        } catch (error) {
+            console.error(`Error setting state:`, error);
+            toggle.disabled = false; // Re-enable on error
+        }
+    };
 
-        const fetchSystemState = async () => {
-          try {
-            const response = await fetch("/api/system/state");
-            const data = await response.json();
-            if (data.success) {
-              const isActive = data.state[MODULE_NAME];
-              toggle.checked = isActive;
-              updateUI(isActive);
-            }
-          } catch (error) {
-            console.error("Error fetching system state:", error);
-          }
-        };
+    // --- UI UPDATE FUNCTIONS ---
+    const updateControlUI = () => {
+        const isActive = systemState[MODULE_NAME];
+        toggle.checked = isActive;
+        toggle.disabled = false;
+        statusText.textContent = isActive ? "Active" : "Inactive";
+        statusText.classList.toggle("text-green-500", isActive);
+        statusText.classList.toggle("text-gray-500", !isActive);
 
-        const updateUI = (isActive) => {
-          statusText.textContent = isActive ? "On" : "Off";
-          statusText.classList.toggle("text-green-400", isActive);
-          statusText.classList.toggle("text-gray-400", !isActive);
-          if (isActive) {
-            videoContainer.classList.add("active");
-            logContainer.classList.add("active");
-            cameraLoader.classList.remove('hidden');
-            cameraStream.classList.add('hidden');
+        if (isActive) {
             cameraStream.src = `/stream?t=${new Date().getTime()}`;
-            if (tabLive.classList.contains('active')) startLivePolling();
-            if (tabEvents.classList.contains('active')) startGalleryPolling();
-          } else {
+        } else {
             cameraStream.src = "";
-            videoContainer.classList.remove("active");
-            logContainer.classList.remove("active");
-            cameraLoader.classList.remove('hidden');
+            cameraLoader.style.display = 'flex';
             cameraStream.classList.add('hidden');
-            stopAllPolling();
-          }
-        };
+            cameraLoader.querySelector('p').textContent = 'Monitoring is inactive.';
+        }
+    };
 
-        const fetchLiveEvents = async () => {
-            try {
-                const response = await fetch(`/api/events?module=${MODULE_NAME}`);
-                const data = await response.json();
-                if (data.success) {
-                    updateActivityTimeline(data.events);
-                    updateSummaryCards(data.events);
-                }
-            } catch (error) {
-                console.error("Error fetching live events:", error);
-            }
-        };
+    const updateActivityTimeline = (events) => {
+        if (!events || events.length === 0) {
+            sidePanes.timeline.innerHTML = `<p class="text-gray-400 text-center py-8">No recent activity detected.</p>`;
+            return;
+        }
 
-        const updateSummaryCards = (events) => {
-            const totalEvents = events.length;
-            const majorEventsCount = events.filter(e => e.class_name.toLowerCase().includes('major')).length;
-            // A simple estimation for active time
-            const activeMinutes = totalEvents * 5; 
+        if (events[0].id === latestEventId) return; // No new events
+        latestEventId = events[0].id;
 
-            activeTimeEl.textContent = `${activeMinutes} min`; 
-            activityEpisodesEl.textContent = totalEvents;
-            majorEventsEl.textContent = majorEventsCount;
-        };
-
-        const updateActivityTimeline = (events) => {
-            if (events.length === 0) {
-                timelineContainer.innerHTML = `<p class="text-gray-500 text-center py-4">No recent activity detected.</p>`;
-                return;
-            }
-            timelineContainer.innerHTML = events.map((event) => {
-                // FIXED: Use the full ISO string from the backend, not a UNIX timestamp
-                const time = new Date(event.timestamp).toLocaleString();
-                const isAlert = ["fall", "immobile", "distress", "major"].some(k => event.class_name.toLowerCase().includes(k));
-                const borderColor = isAlert ? 'border-red-500' : 'border-indigo-500';
-                const iconColor = isAlert ? 'text-red-400' : 'text-indigo-400';
-                const icon = isAlert ? 
-                    `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${iconColor}"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>` : 
-                    `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${iconColor}"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg>`;
-
-                return `
-                <div class="flex items-center space-x-4 p-3 bg-gray-800/30 rounded-lg border-l-4 ${borderColor}">
-                    <div>${icon}</div>
-                    <div class="flex-grow">
-                        <p class="text-white font-medium truncate"><strong>${event.class_name}</strong></p>
-                        <p class="text-xs text-gray-400 font-mono">${time}</p>
-                    </div>
+        sidePanes.timeline.innerHTML = '';
+        events.forEach(event => {
+            const time = new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const isAlert = event.metadata?.alert_level === 'critical';
+            const iconColor = isAlert ? 'text-red-500' : 'text-orange-500';
+            const icon = isAlert 
+                ? `<svg class="w-5 h-5 ${iconColor}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`
+                : `<svg class="w-5 h-5 ${iconColor}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+            
+            const eventEl = document.createElement('div');
+            eventEl.className = 'flex items-start space-x-3 fade-in';
+            eventEl.innerHTML = `
+                <div>${icon}</div>
+                <div class="flex-grow">
+                    <p class="text-sm font-medium text-gray-800">${event.class_name}</p>
+                    <p class="text-xs text-gray-500">${time}</p>
                 </div>`;
-            }).join("");
-        };
+            sidePanes.timeline.appendChild(eventEl);
+        });
+    };
+
+    const renderEventGallery = (events) => {
+        const gallery = contentPanes.events;
+        if (!events || events.length === 0) {
+            gallery.innerHTML = `<div class="col-span-full text-center py-12"><p class="text-gray-500">No captured events to display.</p></div>`;
+            return;
+        }
+        gallery.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${events.map(event => {
+            const time = new Date(event.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+            const imagePath = event.image_path ? `/captured_images/${event.image_path}` : 'https://placehold.co/600x400/e0e0e0/757575?text=No+Image';
+            const description = event.description === null ? '<i class="text-gray-400">Analyzing...</i>' : (event.description || '<i class="text-gray-400">N/A</i>');
+            return `
+            <div class="card overflow-hidden">
+                <img src="${imagePath}" alt="Event capture" class="w-full h-40 object-cover"/>
+                <div class="p-4">
+                    <p class="font-semibold text-gray-800">${event.class_name}</p>
+                    <p class="text-xs text-gray-500 mb-2">${time}</p>
+                    <p class="text-sm text-gray-600"><span class="font-medium text-orange-600">AI:</span> ${description}</p>
+                </div>
+            </div>`;
+        }).join('')}</div>`;
+    };
+
+    const renderMedsWidget = (meds, reminders) => {
+        const container = sidePanes.medsWidget;
+        let nextReminderHtml = '<p class="text-sm text-gray-500">No upcoming reminders.</p>';
+        if (reminders && reminders.length > 0) {
+            const next = reminders[0];
+            const time = new Date(next.reminder_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'});
+            nextReminderHtml = `<div class="text-center bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-orange-800">Next Dose</p>
+                <p class="text-lg font-bold text-orange-600">${next.medication.name}</p>
+                <p class="text-sm text-orange-700">at ${time}</p>
+            </div>`;
+        }
+        container.innerHTML = `
+            <h3 class="text-xl font-semibold mb-4">Medication</h3>
+            ${nextReminderHtml}
+        `;
+    }
+
+    const renderMedicationsPane = (medications) => {
+        const container = contentPanes.meds;
+        const listHtml = (!medications || medications.length === 0)
+            ? `<p class="text-gray-500 text-center py-4">No medications added yet.</p>`
+            : medications.map(med => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                    <div>
+                        <p class="font-medium text-gray-800">${med.name} (${med.dosage})</p>
+                        <p class="text-xs text-gray-500">Takes at ${med.times}</p>
+                    </div>
+                    <button class="delete-med-btn text-gray-400 hover:text-red-500" data-id="${med.id}">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                </div>`).join('');
         
-        const fetchGalleryEvents = async () => {
-            try {
-                const response = await fetch(`/api/events?module=${MODULE_NAME}`);
-                const data = await response.json();
-                if (data.success) renderEventGallery(data.events);
-            } catch (error) {
-                console.error("Error fetching gallery events:", error);
-                gallery.innerHTML = `<p class="text-gray-500 col-span-full">Could not load events.</p>`;
-            }
-        };
+        container.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h4 class="font-semibold text-lg text-gray-800 mb-4">Manage Medications</h4>
+                    <div class="space-y-3">${listHtml}</div>
+                </div>
+                <div>
+                    <form id="add-med-form" class="bg-gray-50 p-4 rounded-lg border space-y-4">
+                        <h5 class="font-semibold text-lg text-gray-800">Add New Medication</h5>
+                        <div>
+                            <label for="med-name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <input type="text" id="med-name" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500">
+                        </div>
+                        <div>
+                            <label for="med-dosage" class="block text-sm font-medium text-gray-700 mb-1">Dosage</label>
+                            <input type="text" id="med-dosage" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500">
+                        </div>
+                        <div>
+                            <label for="med-times" class="block text-sm font-medium text-gray-700 mb-1">Times</label>
+                            <input type="text" id="med-times" required placeholder="e.g., 8:00 AM, 8:00 PM" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500">
+                        </div>
+                        <button type="submit" class="w-full text-center bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">Add Medication</button>
+                    </form>
+                </div>
+            </div>`;
 
-        const renderEventGallery = (events) => {
-            if (events.length === 0) {
-                gallery.innerHTML = `<p class="text-gray-500 col-span-full text-center py-8">No captured event images yet.</p>`;
-                return;
-            }
-            gallery.innerHTML = events.map(event => {
-                const time = new Date(event.timestamp).toLocaleString();
-                const imagePath = event.image_path ? `/captured_images/${event.image_path}` : 'https://placehold.co/600x400/171717/FFF?text=No+Image';
-                return `
-                <div class="card overflow-hidden transition-all duration-300 hover:border-indigo-500 hover:scale-[1.02]" data-event-id="${event.id}">
-                    <div class="p-4 cursor-pointer event-card-header">
-                        <p class="font-semibold text-white truncate">${event.class_name}</p>
-                        <p class="text-xs text-gray-400">${time}</p>
-                    </div>
-                    <div class="event-card-details hidden p-4 pt-0">
-                        <img src="${imagePath}" alt="Event capture" class="rounded-md mb-3 w-full h-auto object-cover"/>
-                        <p class="text-sm text-gray-300 bg-black/20 p-3 rounded-md">
-                           <span class="font-semibold text-indigo-400">AI Analysis:</span> ${event.description || '<i class="text-gray-500">Generating...</i>'}
-                        </p>
-                    </div>
-                </div>`;
-            }).join('');
-            document.querySelectorAll('.event-card-header').forEach(header => {
-                header.addEventListener('click', () => header.nextElementSibling.classList.toggle('hidden'));
+        // Re-add event listeners since we rewrote the HTML
+        document.getElementById('add-med-form').addEventListener('submit', handleAddMed);
+        document.querySelectorAll('.delete-med-btn').forEach(btn => btn.addEventListener('click', handleDeleteMed));
+    };
+
+    const handleAddMed = async (e) => {
+        e.preventDefault();
+        const newMed = {
+            name: document.getElementById('med-name').value,
+            dosage: document.getElementById('med-dosage').value,
+            times: document.getElementById('med-times').value,
+        };
+        try {
+            await fetch('/api/medications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newMed),
             });
-        };
+            e.target.reset();
+            fetchAllData(); // Refresh all data
+        } catch (error) { console.error("Failed to add medication:", error); }
+    };
 
-        const startLivePolling = () => {
-            stopAllPolling();
-            if (toggle.checked) {
-              fetchLiveEvents();
-              livePollingInterval = setInterval(fetchLiveEvents, 3000);
-            }
-        };
-        const startGalleryPolling = () => {
-            stopAllPolling();
-            if (toggle.checked) {
-              fetchGalleryEvents();
-              galleryPollingInterval = setInterval(fetchGalleryEvents, 5000);
-            }
-        };
-        const stopAllPolling = () => {
-            clearInterval(livePollingInterval);
-            clearInterval(galleryPollingInterval);
-            livePollingInterval = null;
-            galleryPollingInterval = null;
-        };
-        
-        mobileMenuButton.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
-        toggle.addEventListener("change", (e) => setModuleState(e.target.checked).then(() => updateUI(e.target.checked)));
+    const handleDeleteMed = async (e) => {
+        const btn = e.currentTarget;
+        const medId = btn.dataset.id;
+        if (confirm('Are you sure you want to delete this medication?')) {
+            try {
+                await fetch(`/api/medications/${medId}`, { method: 'DELETE' });
+                fetchAllData(); // Refresh all data
+            } catch (error) { console.error("Failed to delete medication:", error); }
+        }
+    };
 
-        cameraStream.onload = () => {
-            if(cameraStream.src.includes('stream')){
-                cameraLoader.classList.add('hidden');
-                cameraStream.classList.remove('hidden');
-            }
-        };
-        cameraStream.onerror = () => {
-            cameraLoader.querySelector('p').textContent = 'Stream unavailable.';
-            cameraLoader.classList.remove('hidden');
-            cameraStream.classList.add('hidden');
-        };
+    // --- EVENT LISTENERS & INITIALIZATION ---
+    toggle.addEventListener("change", (e) => setModuleState(e.target.checked));
 
-        tabLive.addEventListener('click', () => {
-            tabLive.classList.add('active');
-            tabEvents.classList.remove('active');
-            activeContentContainer.classList.remove('hidden');
-            galleryContainer.classList.add('hidden');
-            startLivePolling();
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const tabId = tab.id.replace('tab-', '');
+            Object.values(contentPanes).forEach(pane => pane.classList.add('hidden'));
+            contentPanes[tabId].classList.remove('hidden');
         });
+    });
 
-        tabEvents.addEventListener('click', () => {
-            tabEvents.classList.add('active');
-            tabLive.classList.remove('active');
-            activeContentContainer.classList.add('hidden');
-            galleryContainer.classList.remove('hidden');
-            startGalleryPolling();
-        });
+    cameraStream.onload = () => {
+        if (cameraStream.src.includes('stream')) {
+            cameraLoader.style.display = 'none';
+            cameraStream.classList.remove('hidden');
+        }
+    };
+    cameraStream.onerror = () => {
+        cameraLoader.querySelector('p').textContent = 'Stream unavailable.';
+        cameraLoader.style.display = 'flex';
+        cameraStream.classList.add('hidden');
+    };
 
-        fetchSystemState();
-      });
-    </script>
-  </body>
+    fetchAllData(); // Initial load
+    pollingInterval = setInterval(fetchAllData, 3000);
+});
+</script>
+</body>
 </html>

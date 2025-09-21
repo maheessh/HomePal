@@ -1,80 +1,95 @@
-[
+{
+  "events": [
     {
-        "id": "surveillance_1758412597",
-        "timestamp": "2025-09-20T18:56:37.977349",
-        "module": "surveillance",
-        "class_name": "Fire Detected",
-        "confidence": 0.85,
-        "description": "Fire detected with 85.00% confidence",
-        "image_path": "test_image.jpg",
-        "metadata": {
-            "alert_level": "critical",
-            "category": "fire"
-        }
+      "id": "b2c62d2c-6d18-403f-b03a-8b1bdaddc61f",
+      "timestamp": "2025-09-21T00:58:10.347464",
+      "module": "monitor",
+      "class_name": "Fall",
+      "notification": true,
+      "image_path": "capture_b2c62d2c-6d18-403f-b03a-8b1bdaddc61f.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "health",
+        "alert_level": "critical"
+      }
     },
     {
-        "id": "surveillance_1758412586",
-        "timestamp": "2025-09-20T18:56:26.995458",
-        "module": "surveillance",
-        "class_name": "Fire Detected",
-        "confidence": 0.85,
-        "description": "Fire detected with 85.00% confidence",
-        "image_path": "test_image.jpg",
-        "metadata": {
-            "alert_level": "critical",
-            "category": "fire"
-        }
+      "id": "f097372d-acb4-4dc5-a0d1-038dd3612dcb",
+      "timestamp": "2025-09-21T00:57:38.490258",
+      "module": "surveillance",
+      "class_name": "Motion",
+      "notification": true,
+      "image_path": "capture_f097372d-acb4-4dc5-a0d1-038dd3612dcb.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "motion",
+        "alert_level": "low"
+      }
     },
     {
-        "id": "surveillance_1758412574",
-        "timestamp": "2025-09-20T18:56:14.388336",
-        "module": "surveillance",
-        "class_name": "Fire Detected",
-        "confidence": 0.85,
-        "description": "Fire detected with 85.00% confidence",
-        "image_path": "test_image.jpg",
-        "metadata": {
-            "alert_level": "critical",
-            "category": "fire"
-        }
+      "id": "8f1d93c6-6234-413e-af8b-7c882388ead9",
+      "timestamp": "2025-09-21T00:51:23.499219",
+      "module": "surveillance",
+      "class_name": "Motion",
+      "notification": true,
+      "image_path": "capture_8f1d93c6-6234-413e-af8b-7c882388ead9.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "motion",
+        "alert_level": "low"
+      }
     },
     {
-        "id": "surveillance_1758412560",
-        "timestamp": "2025-09-20T18:56:00.270721",
-        "module": "surveillance",
-        "class_name": "Fire Detected",
-        "confidence": 0.85,
-        "description": "Fire detected with 85.00% confidence",
-        "image_path": "test_image.jpg",
-        "metadata": {
-            "alert_level": "critical",
-            "category": "fire"
-        }
+      "id": "d6c3b99b-fd18-4fd6-b0e8-69464ff9a884",
+      "timestamp": "2025-09-21T00:51:08.440325",
+      "module": "surveillance",
+      "class_name": "Motion",
+      "notification": true,
+      "image_path": "capture_d6c3b99b-fd18-4fd6-b0e8-69464ff9a884.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "motion",
+        "alert_level": "low"
+      }
     },
     {
-        "id": "surveillance_1758412281",
-        "timestamp": "2025-09-20T18:51:21.803834",
-        "module": "surveillance",
-        "class_name": "Fire Detected",
-        "confidence": 0.85,
-        "description": "Fire detected with 85.00% confidence",
-        "image_path": "test_image.jpg",
-        "metadata": {
-            "alert_level": "critical",
-            "category": "fire"
-        }
+      "id": "10e0cfde-202e-49f8-b686-8d009c89f159",
+      "timestamp": "2025-09-21T00:44:51.765421",
+      "module": "surveillance",
+      "class_name": "Motion",
+      "notification": true,
+      "image_path": "capture_10e0cfde-202e-49f8-b686-8d009c89f159.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "motion",
+        "alert_level": "low"
+      }
     },
     {
-        "id": "surveillance_1758412171",
-        "timestamp": "2025-09-20T18:49:31.152915",
-        "module": "surveillance",
-        "class_name": "Fire Detected",
-        "confidence": 0.85,
-        "description": "Fire detected with 85.00% confidence",
-        "image_path": "test_image.jpg",
-        "metadata": {
-            "alert_level": "critical",
-            "category": "fire"
-        }
+      "id": "8d7f98a8-0f99-4e8e-8bcf-eb129f5aa5ac",
+      "timestamp": "2025-09-21T00:44:36.597721",
+      "module": "surveillance",
+      "class_name": "Motion",
+      "notification": true,
+      "image_path": "capture_8d7f98a8-0f99-4e8e-8bcf-eb129f5aa5ac.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "motion",
+        "alert_level": "low"
+      }
+    },
+    {
+      "id": "90a62e1b-7beb-4807-8ed1-75d0282d5339",
+      "timestamp": "2025-09-21T00:44:12.843782",
+      "module": "monitor",
+      "class_name": "Fall",
+      "notification": true,
+      "image_path": "capture_90a62e1b-7beb-4807-8ed1-75d0282d5339.jpg",
+      "description": "Description could not be generated.",
+      "metadata": {
+        "category": "health",
+        "alert_level": "critical"
+      }
     }
-]
+  ]
+}

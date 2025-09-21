@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
 Main Flask app that acts as the central controller for the Aegis AI system.
-Controls camera server, manages system state, and serves frontend APIs.
-Now includes a background worker for AI image descriptions and serves static images.
+- Manages camera server lifecycle.
+- Handles system state for detection modules.
+- Serves all frontend pages and static assets.
+- Provides API endpoints for events and summaries.
+- Includes a secure proxy for Gemini AI calls.
+- Implements a new backend for the medication reminder feature.
 """
-from flask import Flask, render_template, jsonify, request, Response, send_from_directory
-from flask_cors import CORS
 import subprocess
 import sys
 import os
@@ -13,19 +15,26 @@ import requests
 import time
 import json
 import threading
-from datetime import datetime
+import uuid
+from datetime import datetime, time as time_obj
+from flask import Flask, render_template, jsonify, request, Response, send_from_directory
+from flask_cors import CORS
 from dotenv import load_dotenv
 from PIL import Image
 import google.generativeai as genai
 
 # --- Configuration ---
 load_dotenv()
+CWD = os.path.dirname(os.path.realpath(__file__))
 CAMERA_SERVER_URL = "http://localhost:5001"
 EVENTS_FILE = "events.json"
+# NEW: Medications database file
+MEDICATIONS_FILE = "medications.json" 
 CAPTURES_DIR = "captured_images"
 
+# --- Initialization ---
 app = Flask(__name__, template_folder="frontend", static_folder="captured_images")
-CORS(app) # Enable Cross-Origin Resource Sharing
+CORS(app)
 
 # Configure Gemini
 try:
@@ -34,18 +43,18 @@ try:
 except Exception as e:
     print(f"⚠️ Gemini configuration failed. Check your GOOGLE_API_KEY. Error: {e}")
 
-# Handle to the camera server process
 camera_process = None
 SYSTEM_STATE = {"surveillance": False, "monitor": False}
 events_lock = threading.Lock()
+# NEW: Lock for medication file access
+meds_lock = threading.Lock()
+
 
 # --- Gemini AI Description Worker ---
-def get_image_description(image_path):
-    """Generates a description for an image using Gemini."""
+def get_image_description(image_path: str):
     try:
-        full_path = os.path.join(CAPTURES_DIR, image_path)
-        if not os.path.exists(full_path):
-            return "Error: Image file not found."
+        full_path = os.path.join(CWD, CAPTURES_DIR, image_path)
+        if not os.path.exists(full_path): return "Error: Image file not found."
 
         img = Image.open(full_path)
         model = genai.GenerativeModel('gemini-pro-vision')
@@ -57,39 +66,32 @@ def get_image_description(image_path):
         return "Description could not be generated."
 
 def description_worker():
-    """A worker thread that processes images to add AI descriptions."""
     print("🤖 AI Description worker started.")
     while True:
-        time.sleep(10) # Check for new events every 10 seconds
+        time.sleep(10)
         
+        full_data = None
         events_to_process = []
         with events_lock:
-            if not os.path.exists(EVENTS_FILE):
-                continue
+            if not os.path.exists(EVENTS_FILE): continue
             try:
                 with open(EVENTS_FILE, 'r') as f:
-                    all_events = json.load(f)
-                
-                # Find events that need a description
-                for event in all_events:
-                    if "description" in event and event["description"] == "" and event.get("image_path"):
-                        events_to_process.append(event)
-            except (json.JSONDecodeError, IOError):
-                continue # File might be busy, try again later
+                    full_data = json.load(f)
+                    all_events = full_data.get("events", [])
+                    # Find events needing a description
+                    for event in all_events:
+                        if event.get("description") is None and event.get("image_path"):
+                            events_to_process.append(event)
+            except (json.JSONDecodeError, IOError): continue
 
-        if not events_to_process:
-            continue
-
+        if not events_to_process: continue
         print(f"Found {len(events_to_process)} events needing description.")
         
-        # This part modifies the list outside the lock to avoid holding it for too long
         modified = False
         for event in events_to_process:
             print(f"Generating description for {event['id']}...")
             description = get_image_description(event['image_path'])
-            
-            # Update the specific event in the main list
-            for original_event in all_events:
+            for original_event in full_data.get("events", []):
                 if original_event['id'] == event['id']:
                     original_event['description'] = description
                     modified = True
@@ -98,71 +100,44 @@ def description_worker():
         if modified:
             with events_lock:
                 with open(EVENTS_FILE, 'w') as f:
-                    json.dump(all_events, f, indent=4)
+                    json.dump(full_data, f, indent=2)
             print("✅ Events file updated with new descriptions.")
 
 
-# --- Camera Process Management (IMPROVED) ---
+# --- Camera Process Management ---
 def start_camera_server():
-    """
-    Starts the camera server process if not already running.
-    Captures and prints stdout/stderr from the subprocess for better debugging.
-    Returns True if the server is alive, False otherwise.
-    """
     global camera_process
-
-    if camera_process and camera_process.poll() is None:
-        return True
+    if camera_process and camera_process.poll() is None: return True
 
     try:
         print("🔄 Starting camera server process...")
-        script_path = os.path.join(os.path.dirname(__file__), "camserve", "camserv.py")
-
-        creationflags = 0
-        if sys.platform == "win32":
-            creationflags = subprocess.CREATE_NO_WINDOW
-
-        # Launch camserv.py as a subprocess, capturing its output
+        script_path = os.path.join(CWD, "camserv.py")
+        creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+        
         camera_process = subprocess.Popen(
-            [sys.executable, script_path],
-            creationflags=creationflags,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True  # Decode stdout/stderr as text
+            [sys.executable, script_path], creationflags=creationflags,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
 
         print("...waiting for camera server to initialize (10s)...")
         time.sleep(10)
 
-        # Check if the process terminated early
         if camera_process.poll() is not None:
-            # It crashed. Read and print its output.
             stdout, stderr = camera_process.communicate()
-            print("❌ Camera server process terminated unexpectedly.")
-            if stdout:
-                print("--- Camera Server Output (stdout) ---")
-                print(stdout)
-            if stderr:
-                print("--- Camera Server Error (stderr) ---")
-                print(stderr)
+            print("❌ Camera server terminated unexpectedly.")
+            if stdout: print(f"--- Camserv stdout ---\n{stdout}")
+            if stderr: print(f"--- Camserv stderr ---\n{stderr}")
             return False
 
-        # Ping the /api/status endpoint to confirm it’s alive
         requests.get(f"{CAMERA_SERVER_URL}/api/status", timeout=5).raise_for_status()
         print("✅ Camera server is up and responding.")
         return True
-
     except Exception as e:
         print(f"❌ Camera server failed to start or respond: {e}")
-        # If it failed, read any output from the process
         if camera_process:
             stdout, stderr = camera_process.communicate()
-            if stdout:
-                print("--- Camera Server Output (stdout) ---")
-                print(stdout)
-            if stderr:
-                print("--- Camera Server Error (stderr) ---")
-                print(stderr)
+            if stdout: print(f"--- Camserv stdout ---\n{stdout}")
+            if stderr: print(f"--- Camserv stderr ---\n{stderr}")
         stop_camera_server()
         return False
 
@@ -173,10 +148,9 @@ def stop_camera_server():
     try:
         camera_process.terminate()
         camera_process.wait(timeout=5)
-    except Exception:
-        camera_process.kill()
-    finally:
-        camera_process = None
+    except Exception: camera_process.kill()
+    finally: camera_process = None
+
 
 # --- Frontend & Camera Routes ---
 @app.route("/")
@@ -195,19 +169,16 @@ def monitor():
 def stream():
     try:
         req = requests.get(f"{CAMERA_SERVER_URL}/stream", stream=True, timeout=10)
-        return Response(
-            req.iter_content(chunk_size=1024),
-            content_type=req.headers.get("content-type")
-        )
+        return Response(req.iter_content(chunk_size=1024), content_type=req.headers['content-type'])
     except requests.exceptions.RequestException:
         return Response("Camera server is not available.", status=503)
 
-# NEW: Route to serve captured images
 @app.route('/captured_images/<path:filename>')
 def serve_captured_image(filename):
-    return send_from_directory(CAPTURES_DIR, filename)
+    return send_from_directory(os.path.join(CWD, CAPTURES_DIR), filename)
 
-# --- Central State Controller (No changes needed) ---
+
+# --- Central State Controller ---
 @app.route("/api/system/state", methods=["GET"])
 def get_system_state():
     return jsonify({"success": True, "state": SYSTEM_STATE})
@@ -235,22 +206,21 @@ def set_module_state():
 
     return jsonify({"success": True, "newState": SYSTEM_STATE})
 
+
 # --- Event Logging and Summary API ---
 def read_events_from_file():
     with events_lock:
-        if not os.path.exists(EVENTS_FILE):
-            return []
+        if not os.path.exists(EVENTS_FILE): return []
         try:
             with open(EVENTS_FILE, "r") as f:
                 content = f.read().strip()
-                return json.loads(content) if content else []
-        except (IOError, json.JSONDecodeError):
-            return []
+                if not content: return []
+                data = json.loads(content)
+                return data.get("events", [])
+        except (IOError, json.JSONDecodeError): return []
 
-# MODIFIED: More flexible event fetching
 @app.route("/api/events")
 def get_events():
-    """Return events, optionally filtered by module."""
     module_filter = request.args.get("module")
     all_events = read_events_from_file()
     if module_filter:
@@ -258,58 +228,124 @@ def get_events():
         return jsonify({"success": True, "events": filtered})
     return jsonify({"success": True, "events": all_events})
 
-@app.route("/api/events/all")
-def get_all_events_deprecated():
-     return get_events()
-
 @app.route("/api/events/summary")
 def get_event_summary():
     events = read_events_from_file()
     today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    events_today = sum(1 for e in events if datetime.fromisoformat(e.get("timestamp", "1970-01-01T00:00:00")) >= today_start)
     
-    events_today = 0
-    for e in events:
-        try:
-            event_time = datetime.fromisoformat(e.get("timestamp", "1970-01-01T00:00:00"))
-            if event_time >= today_start:
-                events_today += 1
-        except (ValueError, TypeError):
-            continue
-            
     last_event_time_str = "N/A"
     if events:
         try:
-           last_event_time_str = datetime.fromisoformat(events[0]["timestamp"]).strftime("%Y-%m-%d %H:%M:%S")
-        except (ValueError, TypeError):
-           last_event_time_str = "Invalid Date"
+            last_event_time_str = datetime.fromisoformat(events[0]["timestamp"]).strftime("%-I:%M %p")
+        except (ValueError, TypeError): last_event_time_str = "Invalid Date"
 
-    summary = {
+    return jsonify({"success": True, "summary": {
         "total_events": len(events),
         "events_today": events_today,
         "last_event_time": last_event_time_str,
-    }
-    return jsonify({"success": True, "summary": summary})
+    }})
 
 @app.route("/api/events/clear", methods=["POST"])
 def clear_events():
-    """Clear all events from the events file"""
     try:
         with events_lock:
             with open(EVENTS_FILE, 'w') as f:
-                json.dump([], f, indent=4)
-        return jsonify({"success": True, "message": "Events cleared successfully"})
+                json.dump({"events": []}, f)
+        return jsonify({"success": True, "message": "Events cleared"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+# --- SECURE GEMINI BRIEFING PROXY ---
+@app.route("/api/generate_briefing", methods=["POST"])
+def generate_briefing_proxy():
+    data = request.get_json()
+    user_query = data.get("user_query")
+    system_prompt = data.get("system_prompt")
+    
+    if not user_query or not system_prompt:
+        return jsonify({"success": False, "error": "Missing query or prompt"}), 400
+        
+    try:
+        model = genai.GenerativeModel(
+            model_name='gemini-1.5-flash',
+            system_instruction=system_prompt
+        )
+        response = model.generate_content(user_query)
+        return jsonify({"success": True, "briefing": response.text})
+    except Exception as e:
+        print(f"❌ Gemini briefing failed: {e}")
+        return jsonify({"success": False, "error": f"AI generation failed: {e}"}), 500
+
+
+# --- NEW: Medication Management API ---
+def read_meds_file():
+    with meds_lock:
+        if not os.path.exists(MEDICATIONS_FILE):
+            with open(MEDICATIONS_FILE, 'w') as f:
+                json.dump([], f)
+            return []
+        try:
+            with open(MEDICATIONS_FILE, 'r') as f:
+                return json.load(f)
+        except (IOError, json.JSONDecodeError):
+            return []
+
+def write_meds_file(data):
+    with meds_lock:
+        with open(MEDICATIONS_FILE, 'w') as f:
+            json.dump(data, f, indent=2)
+
+@app.route('/api/medications', methods=['GET'])
+def get_medications():
+    return jsonify(read_meds_file())
+
+@app.route('/api/medications', methods=['POST'])
+def add_medication():
+    med_data = request.json
+    med_data['id'] = str(uuid.uuid4())
+    meds = read_meds_file()
+    meds.append(med_data)
+    write_meds_file(meds)
+    return jsonify(med_data), 201
+
+@app.route('/api/medications/<string:med_id>', methods=['DELETE'])
+def delete_medication(med_id):
+    meds = read_meds_file()
+    meds_to_keep = [m for m in meds if m['id'] != med_id]
+    if len(meds_to_keep) < len(meds):
+        write_meds_file(meds_to_keep)
+        return jsonify({'success': True}), 200
+    return jsonify({'success': False, 'message': 'Medication not found'}), 404
+
+@app.route('/api/medications/reminders', methods=['GET'])
+def get_reminders():
+    meds = read_meds_file()
+    now = datetime.now()
+    upcoming = []
+    for med in meds:
+        try:
+            times = [t.strip() for t in med.get('times', '').split(',')]
+            for t_str in times:
+                reminder_time = datetime.strptime(t_str, '%I:%M %p').time()
+                reminder_dt = now.replace(hour=reminder_time.hour, minute=reminder_time.minute, second=0, microsecond=0)
+                if reminder_dt > now:
+                    upcoming.append({'reminder_time': reminder_dt.isoformat(), 'medication': med})
+        except ValueError:
+            continue
+    
+    upcoming.sort(key=lambda x: x['reminder_time'])
+    return jsonify({'reminders': upcoming})
+
 
 # --- Main Entrypoint ---
 if __name__ == "__main__":
     try:
-        # Start the background worker
         worker = threading.Thread(target=description_worker, daemon=True)
         worker.start()
-        
-        print("🚀 Starting Aegis AI main controller at http://0.0.0.0:5000")
-        app.run(debug=False, host="0.0.0.0", port=5000)
+        print("🚀 Starting Aegis AI controller at http://0.0.0.0:5000")
+        app.run(debug=False, host="0.0.0.0", port=5000) # Debug=True for development
     finally:
         print("\n🛑 Shutting down application...")
         stop_camera_server()
